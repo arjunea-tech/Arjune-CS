@@ -1,11 +1,18 @@
 import { router } from 'expo-router'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { COLORS } from '../constant/theme'
+import { useCart } from './CartComponents/CartContext'
 
 export default function Product({ product = {}, horizontal = false }) {
   const navigateToProductView = () => {
     if (product?.id) router.push(`/ProductView?id=${product.id}`)
     else router.push('/ProductView')
+  }
+
+  const { addItem } = useCart();
+  const addToCart = (e) => {
+    e?.stopPropagation?.();
+    addItem(product, 1);
   }
 
   return (
@@ -46,9 +53,11 @@ export default function Product({ product = {}, horizontal = false }) {
       </Text>
 
       {/* Button */}
-      <TouchableOpacity className="mt-1.5 py-1.5 rounded-md items-center" style={{ backgroundColor: COLORS.primary }}>
+      <TouchableOpacity className="mt-1.5 py-1.5 rounded-md items-center" style={{ backgroundColor: COLORS.primary }} onPress={() => addToCart()}>
         <Text className="text-white text-xs font-semibold">Add to Cart</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   )
 }
+
+

@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../constant/theme';
+import Button from '../Components/ui/Button';
+import { THEME } from '../Components/ui/theme';
 import productsData from '../testing/ProductsTestData.json';
 
 export default function ProductView() {
@@ -59,12 +60,12 @@ export default function ProductView() {
           </View>
         </View>
 
-        <TouchableOpacity activeOpacity={0.9} style={styles.buyBtnContainer}>
-          <View style={styles.buyBtn}>
-            <MaterialCommunityIcons name="shopping" size={20} color="#fff" />
+        <View style={styles.buyBtnContainer}>
+          <Button style={styles.buyBtn} onPress={() => {}}>
+            <MaterialCommunityIcons name="shopping" size={18} color="#fff" />
             <Text style={styles.buyBtnText}>Buy Now</Text>
-          </View>
-        </TouchableOpacity>
+          </Button>
+        </View>
       </View>
 
       {/* SCROLLABLE PANEL */}
@@ -87,79 +88,74 @@ export default function ProductView() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.primary },
+  safeArea: { flex: 1, backgroundColor: THEME.colors.primary },
   header: {
     height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: THEME.spacing.md,
   },
-  headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  headerTitle: { color: '#fff', fontSize: THEME.fonts.title, fontWeight: 'bold' },
   backButton: { padding: 5 },
-  heroContainer: { backgroundColor: COLORS.primary, paddingBottom: 50, alignItems: 'center', zIndex: 1 },
+  heroContainer: { backgroundColor: THEME.colors.primary, paddingBottom: 56, alignItems: 'center', zIndex: 1 },
   imageCard: {
     width: '90%',
-    height: 240,
+    height: 260,
     backgroundColor: '#000',
-    borderRadius: 25,
+    borderRadius: THEME.radii.lg,
     overflow: 'hidden',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    ...THEME.shadows.medium
   },
   fullImage: { width: '100%', height: '100%' },
   priceBadge: {
     position: 'absolute',
-    bottom: 15,
+    bottom: 18,
     alignSelf: 'center',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    minWidth: 80,
+    height: 44,
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  priceBadgeText: { textAlign: 'center', color: '#000', fontWeight: 'bold', fontSize: 13 },
-  buyBtnContainer: { position: 'absolute', bottom: 25, zIndex: 10 },
+  priceBadgeText: { textAlign: 'center', color: '#000', fontWeight: '700', fontSize: THEME.fonts.subtitle },
+  buyBtnContainer: { position: 'absolute', bottom: 22, zIndex: 10 },
   buyBtn: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 35,
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: 'center',
-    elevation: 5,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: THEME.radii.round,
+    alignItems: 'center'
   },
-  buyBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: 10 },
+  buyBtnText: { color: '#fff', fontWeight: '700', fontSize: THEME.fonts.body, marginLeft: 10 },
   detailsPanel: {
     flex: 1,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
+    borderTopLeftRadius: THEME.radii.lg,
+    borderTopRightRadius: THEME.radii.lg,
     marginTop: -25,
-    paddingHorizontal: 25,
-    paddingTop: 45,
+    paddingHorizontal: THEME.spacing.md,
+    paddingTop: THEME.spacing.lg,
   },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-  description: { fontSize: 16, color: '#444', marginTop: 10, lineHeight: 24 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 30, color: '#000' },
+  title: { fontSize: 22, fontWeight: '800', color: THEME.colors.text },
+  description: { fontSize: THEME.fonts.body, color: THEME.colors.subtext, marginTop: 10, lineHeight: 24 },
+  sectionTitle: { fontSize: THEME.fonts.title, fontWeight: '700', marginTop: THEME.spacing.lg, color: THEME.colors.text },
   videoContainer: {
     marginTop: 15,
     height: 180,
-    borderRadius: 20,
+    borderRadius: THEME.radii.md,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: THEME.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: THEME.colors.surface,
   },
   playIconBg: {
     width: 80,
     height: 55,
-    backgroundColor: '#FF4444',
+    backgroundColor: THEME.colors.primary,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',

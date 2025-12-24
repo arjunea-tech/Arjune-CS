@@ -1,0 +1,31 @@
+[
+  {
+    "id": "ord_1001",
+    "placedAt": "2025-10-24",
+    "steps": [
+      { "key": "placed", "label": "Order placed", "date": "Oct-24", "done": true },
+      { "key": "shipped", "label": "Shipped", "date": "Oct-25", "done": true },
+      { "key": "out", "label": "Out for Delivery", "date": "Oct-26", "done": false },
+      { "key": "delivered", "label": "Delivered", "date": "Oct-27", "done": false }
+    ],
+    "items": [
+      { "productId": "1", "quantity": 1 },
+      { "productId": "7", "quantity": 1 },
+      { "productId": "11", "quantity": 1 }
+    ]
+  },
+  {
+    "id": "ord_1002",
+    "placedAt": "2025-11-05",
+    "steps": [
+      { "key": "placed", "label": "Order placed", "date": "Nov-05", "done": true },
+      { "key": "shipped", "label": "Shipped", "date": "Nov-06", "done": false },
+      { "key": "out", "label": "Out for Delivery", "date": "", "done": false },
+      { "key": "delivered", "label": "Delivered", "date": "", "done": false }
+    ],
+    "items": [
+      { "productId": "4", "quantity": 2 },
+      { "productId": "12", "quantity": 1 }
+    ]
+  }
+]
