@@ -1,35 +1,61 @@
-import { Dimensions, View } from 'react-native'
+import { Dimensions, Image, Text, View } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import Carousel, { Pagination } from 'react-native-reanimated-carousel'
 import { COLORS } from '../constant/theme'
+import banners from '../testing/BannerTestData.json'
 
 const { width } = Dimensions.get('window')
-const banners = [1, 2, 3, 4]
 
-export default function BannerCarousel() {
+export default function BannerCarousel({ data = banners }) {
   const progress = useSharedValue(0)
+
+  // If there are no banners, render a placeholder so layout remains consistent
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <View className="mt-4 px-4">
+        <View
+          className="h-36 rounded-2xl bg-gray-200 items-center justify-center"
+          style={{ width: width - 32 }}
+        >
+          <Text className="text-gray-500">No banners available</Text>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View className="mt-4">
       <Carousel
         width={width}
-        height={100}
+        height={140}
         autoPlay
         loop
-        data={banners}
+        data={data}
         scrollAnimationDuration={3000}
         onProgressChange={(_, absoluteProgress) => {
           progress.value = absoluteProgress
         }}
-        renderItem={() => (
-          <View className="mx-4 h-full rounded-2xl bg-gray-300" />
+        renderItem={({ item }) => (
+          <View className="mx-4 h-full rounded-2xl overflow-hidden" style={{ width: width - 32 }}>
+            <Image
+              source={{ uri: item.image }}
+              style={{ width: '100%', height: '100%', borderRadius: 16 }}
+              resizeMode="cover"
+            />
+
+            {/* Overlay */}
+            <View style={{ position: 'absolute', left: 12, bottom: 12 }}>
+              <Text className="text-white text-lg font-bold">{item.title}</Text>
+              <Text className="text-white text-sm">{item.subtitle}</Text>
+            </View>
+          </View>
         )}
       />
 
       {/* ✅ Pagination Dots */}
       <Pagination.Basic
         progress={progress}
-        data={banners}
+        data={data}
         dotStyle={{
           width: 8,
           height: 8,

@@ -8,8 +8,16 @@ const filters = [
     { id: 'high', label: 'High → Low' },
 ]
 
-export default function FilterChips() {
-    const [active, setActive] = useState('az')
+export default function FilterChips({ active = 'default', onChange = () => {} }) {
+    // local fallback state for uncontrolled use
+    const [localActive, setLocalActive] = useState(active)
+
+    const handlePress = (id) => {
+        setLocalActive(id)
+        onChange(id)
+    }
+
+    const current = active || localActive
 
     return (
         <View className="mt-6">
@@ -20,11 +28,11 @@ export default function FilterChips() {
                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
             >
                 {filters.map(item => {
-                    const isActive = active === item.id
+                    const isActive = current === item.id
                     return (
                         <TouchableOpacity
                             key={item.id}
-                            onPress={() => setActive(item.id)}
+                            onPress={() => handlePress(item.id)}
                             className={`px-4 py-2 rounded-full border ${isActive
                                     ? 'bg-orange-500 border-orange-500'
                                     : 'bg-white border-gray-300'

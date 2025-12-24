@@ -1,0 +1,182 @@
+[
+    {
+        "id": "1",
+        "name": "Wireless Headphones",
+        "price": 99.99,
+        "image": "https://images.unsplash.com/photo-1518444027700-1b8d0180d6b1?auto=format&fit=crop&w=1200&q=80",
+        "category": "1",
+        "bestSelling": true,
+        "description": "Comfortable over-ear headphones with active noise cancellation."
+    },
+    {
+        "id": "2",
+        "name": "Smart Watch",
+        "price": 149.99,
+        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80",
+        "category": "2",
+        "bestSelling": true,
+        "description": "Stylish smart watch with fitness tracking."
+    },
+    {
+        "id": "3",
+        "name": "Espresso Machine",
+        "price": 249.0,
+        "image": "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80",
+        "category": "3",
+        "bestSelling": false,
+        "description": "Compact espresso machine for barista-style coffee."
+    },
+    {
+        "id": "4",
+        "name": "Running Shoes",
+        "price": 79.5,
+        "image": "https://images.unsplash.com/photo-1528701800489-476c5b1d01f5?auto=format&fit=crop&w=1200&q=80",
+        "category": "2",
+        "bestSelling": true,
+        "description": "Lightweight running shoes with responsive cushioning."
+    },
+    {
+        "id": "5",
+        "name": "Electric Kettle",
+        "price": 39.99,
+        "image": "https://images.unsplash.com/photo-1532634896-26909d0d5b0a?auto=format&fit=crop&w=1200&q=80",
+        "category": "3",
+        "bestSelling": false,
+        "description": "Fast-boiling electric kettle with auto shut-off."
+    },
+    {
+        "id": "6",
+        "name": "Scented Candle",
+        "price": 14.99,
+        "image": "",
+        "category": "4",
+        "bestSelling": false,
+        "description": "Hand-poured soy candle with calming fragrance."
+    },
+    {
+        "id": "7",
+        "name": "Bluetooth Speaker",
+        "price": 59.0,
+        "image": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
+        "category": "1",
+        "bestSelling": true,
+        "description": "Portable speaker with excellent sound and long battery life."
+    },
+    {
+        "id": "8",
+        "name": "Yoga Mat",
+        "price": 29.99,
+        "image": "https://images.unsplash.com/photo-1606813902810-0c88d6d3c8f2?auto=format&fit=crop&w=1200&q=80",
+        "category": "4",
+        "bestSelling": false,
+        "description": "Non-slip yoga mat for comfortable workouts."
+    },
+    {
+        "id": "9",
+        "name": "Laptop Sleeve",
+        "price": 24.5,
+        "image": "",
+        "category": "1",
+        "bestSelling": false,
+        "description": "Protective neoprene laptop sleeve."
+    },
+    {
+        "id": "10",
+        "name": "Desk Lamp",
+        "price": 34.99,
+        "image": "https://images.unsplash.com/photo-1505691723518-36a6a6e5e1a2?auto=format&fit=crop&w=1200&q=80",
+        "category": "3",
+        "bestSelling": false,
+        "description": "Adjustable desk lamp with warm light."
+    },
+    {
+        "id": "11",
+        "name": "Bluetooth Earbuds",
+        "price": 59.99,
+        "image": "https://images.unsplash.com/photo-1511223863825-36a0b041a8b8?auto=format&fit=crop&w=1200&q=80",
+        "category": "1",
+        "bestSelling": true,
+        "description": "Compact earbuds with excellent sound."
+    },
+    {
+        "id": "12",
+        "name": "Leather Wallet",
+        "price": 49.99,
+        "image": "",
+        "category": "2",
+        "bestSelling": false,
+        "description": "Slim leather wallet with RFID protection."
+    },
+    {
+        "id": "13",
+        "name": "Ceramic Planter",
+        "price": 22.0,
+        "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+        "category": "4",
+        "bestSelling": false,
+        "description": "Modern ceramic planter for indoor plants."
+    },
+    {
+        "id": "14",
+        "name": "Travel Mug",
+        "price": 19.99,
+        "image": "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=1200&q=80",
+        "category": "3",
+        "bestSelling": false,
+        "description": "Insulated travel mug keeps drinks hot or cold."
+    },
+    {
+        "id": "15",
+        "name": "Action Camera",
+        "price": 199.99,
+        "image": "https://images.unsplash.com/photo-1519181245277-cffeb31da2c2?auto=format&fit=crop&w=1200&q=80",
+        "category": "1",
+        "bestSelling": true,
+        "description": "Waterproof action camera for adventure shooting."
+    },
+    {
+        "id": "16",
+        "name": "Cookware Set",
+        "price": 129.99,
+        "image": "",
+        "category": "3",
+        "bestSelling": false,
+        "description": "10-piece non-stick cookware set."
+    },
+    {
+        "id": "17",
+        "name": "Sunglasses",
+        "price": 69.0,
+        "image": "https://images.unsplash.com/photo-1514853862422-6c5a16f7d8bb?auto=format&fit=crop&w=1200&q=80",
+        "category": "2",
+        "bestSelling": false,
+        "description": "Polarized sunglasses with UV protection."
+    },
+    {
+        "id": "18",
+        "name": "Throw Blanket",
+        "price": 39.5,
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "category": "4",
+        "bestSelling": false,
+        "description": "Soft throw blanket for living room."
+    },
+    {
+        "id": "19",
+        "name": "Gaming Mouse",
+        "price": 49.99,
+        "image": "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80",
+        "category": "1",
+        "bestSelling": true,
+        "description": "Ergonomic gaming mouse with programmable buttons."
+    },
+    {
+        "id": "20",
+        "name": "Water Bottle",
+        "price": 14.99,
+        "image": "",
+        "category": "4",
+        "bestSelling": false,
+        "description": "Reusable stainless steel water bottle."
+    }
+]

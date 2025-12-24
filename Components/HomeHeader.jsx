@@ -3,7 +3,7 @@ import LottieView from 'lottie-react-native'
 import { Text, TextInput, View } from 'react-native'
 import { COLORS } from '../constant/theme'
 
-export default function HomeHeader() {
+export default function HomeHeader({ searchValue = '', onChangeText = () => {} }) {
     return (
         <View>
             {/* Header */}
@@ -40,6 +40,8 @@ export default function HomeHeader() {
                         placeholder="Search products..."
                         placeholderTextColor="#999"
                         className="flex-1 ml-2 text-gray-800"
+                        value={searchValue}
+                        onChangeText={onChangeText}
                     />
                 </View>
             </View>
