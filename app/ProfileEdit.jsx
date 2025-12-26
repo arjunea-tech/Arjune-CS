@@ -1,13 +1,6 @@
-import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity,  Alert,ScrollView,} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 export default function EditProfile() {
   const navigation = useNavigation();
@@ -19,7 +12,7 @@ export default function EditProfile() {
   const [state, setState] = useState("");
   const [mobile, setMobile] = useState("");
 
-  // 🔹 Pincode → District & State (sample data)
+
 
   const handleSave = () => {
     if (!name || !address || !pincode || !mobile) {
