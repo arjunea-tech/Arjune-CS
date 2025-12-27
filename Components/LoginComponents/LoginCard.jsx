@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Formik } from 'formik';
 import {
     Dimensions,
     StyleSheet,
@@ -6,11 +6,19 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import * as YUP from 'yup';
 import { CustomButton } from './CustomButton';
 import { Divider } from './Divider';
 import { InputField } from './InputField';
 
 const { width } = Dimensions.get('window');
+
+const LoginSchema = YUP.object().shape({
+  email: YUP.string().email('Invalid email').required('Email is required'),
+  password: YUP.string()
+    .min(8, 'Password too short')
+    .required('Password is required'),
+});
 
 export function LoginCard({
   onLogin,
@@ -18,73 +26,84 @@ export function LoginCard({
   onSignUp,
   onForgetPassword,
 }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = () => {
-    onLogin(email, password);
-  };
-
   return (
-    <View style={styles.card}>
-      <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-      <Text style={styles.subtitle}>Celebrate Diwali with us</Text>
-      <Text style={styles.subtitle}>Login to Continue.</Text>
+    <Formik
+      initialValues={{ email: '', password: '' }}
+      validationSchema={LoginSchema}
+      onSubmit={(values) => {
+        onLogin(values.email, values.password);
+      }}
+    >
+      {({
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        values,
+        errors,
+        touched,
+      }) => (
+        <View style={styles.card}>
+          <Text style={styles.welcomeTitle}>Welcome Back!</Text>
+          <Text style={styles.subtitle}>Celebrate Diwali with us</Text>
+          <Text style={styles.subtitle}>Login to Continue.</Text>
 
-      {/* Email Input */}
-      <InputField
-        icon="mail"
-        iconColor="#FF6B35"
-        placeholder="Email Address"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+          <InputField
+            icon="mail"
+            iconColor="#FF6B35"
+            placeholder="Email Address"
+            value={values.email}
+            onChangeText={handleChange('email')}
+            onBlur={handleBlur('email')}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          {touched.email && errors.email && (
+            <Text style={styles.errorText}>{errors.email}</Text>
+          )}
 
-      {/* Password Input */}
-      <InputField
-        icon="lock-closed"
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        isPassword
-      />
+          <InputField
+            icon="lock-closed"
+            placeholder="Password"
+            value={values.password}
+            onChangeText={handleChange('password')}
+            onBlur={handleBlur('password')}
+            isPassword
+          />
+          {touched.password && errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
 
-      {/* Login Button */}
-      <CustomButton
-        title="LOGIN"
-        onPress={handleLogin}
-        customStyle={{ marginTop: 24 }}
-      />
+          <CustomButton
+            title="LOGIN"
+            onPress={() => handleSubmit()}
+            customStyle={{ marginTop: 24 }}
+          />
 
-      {/* Forget Password */}
-      <TouchableOpacity
-        style={styles.forgetPasswordContainer}
-        onPress={onForgetPassword}
-      >
-        <Text style={styles.forgetPassword}>Forget Password?</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.forgetPasswordContainer}
+            onPress={onForgetPassword}
+          >
+            <Text style={styles.forgetPassword}>Forget Password?</Text>
+          </TouchableOpacity>
 
-      {/* Sign Up Link */}
-      <View style={styles.signupContainer}>
-        <Text style={styles.signupText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={onSignUp}>
-          <Text style={styles.signupLink}>Sign up</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={onSignUp}>
+              <Text style={styles.signupLink}>Sign up</Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Divider */}
-      <Divider />
+          <Divider />
 
-      {/* Google Login Button */}
-      <CustomButton
-        title="Continue with Google"
-        icon="logo-google"
-        variant="google"
-        onPress={onGoogleLogin}
-      />
-    </View>
+          <CustomButton
+            title="Continue with Google"
+            icon="logo-google"
+            variant="google"
+            onPress={onGoogleLogin}
+          />
+        </View>
+      )}
+    </Formik>
   );
 }
 
@@ -95,32 +114,28 @@ const styles = StyleSheet.create({
     padding: 32,
     width: width - 40,
     maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 4,
-    borderColor: '#4A90E2',
   },
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#000',
   },
   subtitle: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
   },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+  },
   forgetPasswordContainer: {
     alignItems: 'center',
     marginTop: 16,
   },
   forgetPassword: {
-    color: '#333',
     fontSize: 13,
   },
   signupContainer: {
@@ -129,12 +144,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   signupText: {
-    color: '#333',
     fontSize: 13,
   },
   signupLink: {
-    color: '#FF4444',
     fontSize: 13,
     fontWeight: 'bold',
+    color: '#FF4444',
   },
 });
