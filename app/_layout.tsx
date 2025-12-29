@@ -15,6 +15,7 @@ export default function RootLayout() {
         > 
           {/* <Stack.Screen name="(tabs)" /> */}
           <Stack.Screen name="(auth)" />
+          {/* <Stack.Screen name="(admin)" /> */}
         </Stack>
       </CartProvider>
     </SafeAreaView>

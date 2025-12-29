@@ -21,7 +21,7 @@ export default function _layout() {
         name="Home"
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <Text
+            <Text 
               style={{
                 fontSize: 12,
                 fontWeight: focused ? '700' : '400',
