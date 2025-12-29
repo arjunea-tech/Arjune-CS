@@ -9,13 +9,12 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <CartProvider>
         <Stack
-          screenOptions={{
+          screenOptions={{ 
             headerShown: false,
           }}
         > 
           {/* <Stack.Screen name="(tabs)" /> */}
           <Stack.Screen name="(auth)" />
-          {/* <Stack.Screen name="(admin)" /> */}
         </Stack>
       </CartProvider>
     </SafeAreaView>
