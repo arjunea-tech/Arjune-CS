@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from 'react-native'
-import productsData from '../testing/ProductsTestData.json'
+import productsData from '../../testing/ProductsTestData.json'
 import Product from './Product'
 
 export default function BestSellingProducts({ data = productsData }) {

@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
-import { COLORS } from '../constant/theme'
-import { useCart } from './CartComponents/CartContext'
+import { COLORS } from '../../constant/theme'
+import { useCart } from '../CartComponents/CartContext'
 
 export default function Product({ product = {}, horizontal = false }) {
   const navigateToProductView = () => {

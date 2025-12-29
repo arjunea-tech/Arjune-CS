@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: THEME.radii.lg,
     borderTopRightRadius: THEME.radii.lg,
-    marginTop: -25,
+    marginTop:0,
     paddingHorizontal: THEME.spacing.md,
     paddingTop: THEME.spacing.lg,
   },
