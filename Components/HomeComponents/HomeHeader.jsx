@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import LottieView from 'lottie-react-native'
 import { Text, TextInput, View } from 'react-native'
-import { COLORS } from '../constant/theme'
+import { COLORS } from '../../constant/theme'
 
 export default function HomeHeader({ searchValue = '', onChangeText = () => {} }) {
     return (
@@ -13,7 +13,7 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => {} }
             >
                 {/* 🎆 LOTTIE BACKGROUND */}
                 <LottieView
-                    source={require('../assets/images/Fireworks Teal and Red.json')}
+                    source={require('../../assets/images/Fireworks Teal and Red.json')}
                     autoPlay
                     loop
                     style={{

@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from 'react-native'
-import categoriesData from '../testing/CategoryTestData.json'
+import categoriesData from '../../testing/CategoryTestData.json'
 import Categories from './Categories'
 
 export default function ShopByCategory({ data = categoriesData, activeCategory = 'all', onSelectCategory = () => {} }) {

@@ -1,8 +1,8 @@
 import { Dimensions, Image, Text, View } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import Carousel, { Pagination } from 'react-native-reanimated-carousel'
-import { COLORS } from '../constant/theme'
-import banners from '../testing/BannerTestData.json'
+import { COLORS } from '../../constant/theme'
+import banners from '../../testing/BannerTestData.json'
 
 const { width } = Dimensions.get('window')
 

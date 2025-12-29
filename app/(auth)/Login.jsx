@@ -29,6 +29,7 @@ export default function Login() {
 
   const handleSignUp = () => {
     console.log('Sign up clicked');
+    router.push('/(auth)/Register');
   };
 
   const handleForgetPassword = () => {

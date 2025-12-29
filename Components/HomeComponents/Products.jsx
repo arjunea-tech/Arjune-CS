@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Text, TouchableOpacity, View } from 'react-native'
-import productsData from '../testing/ProductsTestData.json'
+import productsData from '../../testing/ProductsTestData.json'
 import Product from './Product'
 
 export default function Products({ data = productsData, onClear = () => {} }) {
