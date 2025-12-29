@@ -17,6 +17,7 @@ export default function Login() {
     const user = users.find(u => u.email === email && u.password === password);
     if (user) {
       Alert.alert('Login Successful', `Welcome back, ${email}!`);
+      router.replace('/(tabs)/Home');
     } else {
       Alert.alert('Login Failed', 'Invalid email or password.');
     }
