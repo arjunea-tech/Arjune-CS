@@ -13,8 +13,8 @@ export default function RootLayout() {
             headerShown: false,
           }}
         > 
-          {/* <Stack.Screen name="(tabs)" /> */}
-          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          {/* <Stack.Screen name="(auth)" /> */}
         </Stack>
       </CartProvider>
     </SafeAreaView>

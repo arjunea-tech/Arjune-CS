@@ -1,6 +1,13 @@
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import ChitHeader from "../../Components/ChitComponenets/ChitHeader";
 import SingleChit from "../../Components/ChitComponenets/SingleChit";
 
@@ -14,7 +21,17 @@ export default function Chit() {
 
   return (
     <View style={styles.container}>
-      <ChitHeader />
+      {/* 🔙 Header like Orders */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
+          <Ionicons name="arrow-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>Chit Schemes</Text>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {[
@@ -54,7 +71,7 @@ export default function Chit() {
             provided={plan.provided}
             isOpen={openIndex === i}
             onToggle={toggle}
-            onJoin={() => navigation.navigate('Profile')}
+            onJoin={() => navigation.navigate("Profile")}
           />
         ))}
       </ScrollView>
@@ -62,13 +79,28 @@ export default function Chit() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ff7f00",
   },
 
+  /* Header like Orders */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  backBtn: {
+    marginRight: 10,
+  },
+  pageTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  /* (Kept for SingleChit usage if needed) */
   card: {
     backgroundColor: "#fff",
     marginHorizontal: 16,
@@ -76,26 +108,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
   },
-
   row: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   label: {
     fontSize: 14,
     color: "#333",
   },
-
   value: {
     flex: 1,
     marginLeft: 6,
     fontSize: 14,
     fontWeight: "600",
   },
-
   joinBtn: {
-    backgroundColor: "#ff7f00",
+    backgroundColor: "#f50000ff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -103,13 +131,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 12,
   },
-
   joinText: {
     color: "#fff",
     fontWeight: "600",
     marginLeft: 6,
   },
-
   info: {
     fontSize: 13,
     color: "#333",

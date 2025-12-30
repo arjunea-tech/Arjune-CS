@@ -10,7 +10,7 @@ export default function OrderTimeline({ steps = [] }) {
           <View style={styles.left}>
             <View style={[styles.circle, s.done ? styles.circleDone : styles.circlePending]}>
               {s.done ? (
-                <MaterialCommunityIcons name="check" size={14} color="#fff" />
+                <MaterialCommunityIcons name="check" size={14} color="#e7e0dfff" />
               ) : (
                 <MaterialCommunityIcons name="clock-outline" size={12} color="#666" />
               )}

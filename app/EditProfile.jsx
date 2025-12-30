@@ -50,7 +50,7 @@ export default function EditProfile() {
       Alert.alert("Error", "Please fill all required fields");
       return;
     }
-
+ 
     Alert.alert("Success", "Profile updated successfully");
     navigation.goBack();
   };

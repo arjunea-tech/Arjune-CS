@@ -35,7 +35,7 @@ export default function Product({ product = {}, horizontal = false }) {
       {product?.image ? (
         <Image
           source={{ uri: product.image }}
-          style={{ width: '100%', height: 80, borderRadius: 8 }}
+          style={{ width: '100%', height: 70, borderRadius: 10 }}
           resizeMode="cover"
         />
       ) : (
@@ -43,18 +43,18 @@ export default function Product({ product = {}, horizontal = false }) {
       )}
 
       {/* Name */}
-      <Text className="mt-1.5 text-sm font-medium" numberOfLines={2}>
+      <Text className="mt-4 text-sm font-medium" numberOfLines={2}>
         {product?.name ?? 'Product Name'}
       </Text>
 
       {/* Price */}
-      <Text className="text-xs text-gray-600 mt-0.5">
+      <Text className="text-xs text-gray-600 mt-1">
         ${product?.price?.toFixed ? product.price.toFixed(2) : (product?.price ?? '0.00')}
       </Text>
 
       {/* Button */}
-      <TouchableOpacity className="mt-1.5 py-1.5 rounded-md items-center" style={{ backgroundColor: COLORS.primary }} onPress={() => addToCart()}>
-        <Text className="text-white text-xs font-semibold">Add to Cart</Text>
+      <TouchableOpacity className="mt-3 py-3 rounded-md items-center" style={{ backgroundColor: COLORS.primary }} onPress={() => addToCart()}>
+        <Text className="text-white text-sm font-semibold">Add to Cart</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   )

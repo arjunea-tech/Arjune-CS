@@ -1,15 +1,17 @@
 import { router } from 'expo-router';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text
 } from 'react-native';
+
 import { FireworkDecoration } from '../../Components/LoginComponents/FireworkDecoration';
 import { RegisterCard } from '../../Components/RegisterComponents/RegisterCard';
 import { THEME } from '../../Components/ui/theme';
+import "../../Components/RegisterComponents/RegisterCard"
 
 export default function Register() {
   const handleRegister = async (values) => {
@@ -43,7 +45,7 @@ export default function Register() {
           onRegister={handleRegister}
           onGoogleLogin={handleGoogleRegister}
         />
-        
+
         {/* Bottom Fireworks */}
         <FireworkDecoration bottom={-20} left={-30} width={150} height={150} />
         <FireworkDecoration bottom={-20} right={-30} width={200} height={200} />
@@ -55,7 +57,7 @@ export default function Register() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: THEME.colors.primary || '#FF3B30', 
+    backgroundColor: THEME.colors.primary || '#FF3B30',
   },
   container: {
     flexGrow: 1,
