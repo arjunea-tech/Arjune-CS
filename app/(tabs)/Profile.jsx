@@ -15,7 +15,6 @@ export default function Profile() {
   const navigation = useNavigation();
 
   const sections = [
-    /* ================= MY CHIT ================= */
     {
       title: "My Chit",
       items: [
@@ -27,7 +26,6 @@ export default function Profile() {
       ],
     },
 
-    /* ================= ACCOUNT SETTINGS ================= */
     {
       title: "Account Settings",
       items: [
@@ -44,15 +42,51 @@ export default function Profile() {
       ],
     },
 
-    /* ================= APP ================= */
+    /* ✅ APP + ABOUT US DETAILS */
     {
       title: "App",
       items: [
         {
           icon: "information-circle-outline",
           label: "About CrackerShop",
-          onPress: () => navigation.navigate("AboutUs"),
+          message: "Quality crackers at best price",
         },
+        {
+          icon: "call-outline",
+          label: "Mobile Number",
+          message: "+91 98765 43210",
+          onPress: () => Linking.openURL("tel:+919876543210"),
+        },
+        {
+          icon: "home-outline",
+          label: "Address",
+          message: "No.12, Main Road, Sivakasi",
+        },
+        {
+          icon: "business-outline",
+          label: "District",
+          message: "Virudhunagar",
+        },
+        {
+          icon: "map-outline",
+          label: "State",
+          message: "Tamil Nadu",
+        },
+        {
+          icon: "mail-outline",
+          label: "Pincode",
+          message: "626123",
+        },
+        {
+          icon: "navigate-outline",
+          label: "View Location",
+          onPress: () =>
+            Linking.openURL(
+              "https://www.google.com/maps/search/?api=1&query=Sivakasi+Tamil+Nadu"
+            ),
+        },
+
+        /* SHARE */
         {
           icon: "share-social-outline",
           label: "Share App",
@@ -62,11 +96,13 @@ export default function Profile() {
                 message:
                   "Check out CrackerShop — download the app: https://example.com/download",
               });
-            } catch (error) {
-              console.log(error);
+            } catch (err) {
+              console.log(err);
             }
           },
         },
+
+        /* DOWNLOADS */
         {
           icon: "document-text-outline",
           label: "Download Price List (PDF)",
@@ -93,18 +129,16 @@ export default function Profile() {
         >
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.pageTitle}>Profile</Text>
       </View>
 
-      {/* PROFILE AVATAR */}
       <ProfileAvatar />
 
-      {/* PROFILE OPTIONS */}
       <View style={{ flex: 1 }}>
         <ProfileCard sections={sections} />
       </View>
 
-      {/* LOGOUT */}
       <TouchableOpacity
         style={styles.logoutBtn}
         onPress={() => console.log("logout pressed")}
@@ -115,7 +149,6 @@ export default function Profile() {
   );
 }
 
-/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
