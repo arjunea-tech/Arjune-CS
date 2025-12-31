@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80",
+    "title": "Fireworks Sale",
+    "subtitle": "Up to 50% off selected items",
+    "link": "/sale"
+  },
+  {
+    "id": "2",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80",
+    "title": "New Arrivals",
+    "subtitle": "Check out the latest products",
+    "link": "/new"
+  },
+  {
+    "id": "3",
+    "image": "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=1200&q=80",
+    "title": "Best Sellers",
+    "subtitle": "Discover customer favorites",
+    "link": "/best"
+  },
+  {
+    "id": "4",
+    "image": "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1200&q=80",
+    "title": "Limited Offer",
+    "subtitle": "Don't miss out",
+    "link": "/offer"
+  }
+]
