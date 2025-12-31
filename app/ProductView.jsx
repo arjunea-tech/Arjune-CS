@@ -49,7 +49,7 @@ export default function ProductView() {
           </View>
         </View>
 
-        {/* BUTTONS */}
+        {/* BUTTONS (MOVED UP) */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.whiteBtn}>
             <MaterialCommunityIcons name="cart-outline" size={18} color="#ff7f00" />
@@ -102,14 +102,14 @@ const styles = StyleSheet.create({
 
   heroContainer: {
     alignItems: 'center',
-    paddingBottom: 20
+    paddingBottom: 10
   },
 
   imageCard: {
     width: '90%',
     height: 260,
     backgroundColor: '#000',
-    borderRadius: 20,
+    borderRadius: 50,
     overflow: 'hidden'
   },
 
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
 
   priceBadge: {
     position: 'absolute',
-    bottom: -35,
+    bottom: -15,
     alignSelf: 'center',
     width: 90,
     height: 90,
@@ -149,10 +149,11 @@ const styles = StyleSheet.create({
     color: '#ff7f00'
   },
 
+  /* 🔼 BUTTONS MOVED UP HERE */
   buttonRow: {
     flexDirection: 'row',
     gap: 14,
-    marginTop: 50
+    marginTop: 20   // ⬅️ reduced from 50
   },
 
   whiteBtn: {
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 30,
+    borderRadius: 50,
     elevation: 4
   },
 
@@ -176,7 +177,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
-    marginTop: -20,
+    marginTop: 0,
+    borderRadius: 22,
     padding: 16
   },
 

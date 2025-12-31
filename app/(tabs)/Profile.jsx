@@ -15,16 +15,7 @@ export default function Profile() {
   const navigation = useNavigation();
 
   const sections = [
-    {
-      title: "My Shopping",
-      items: [
-        {
-          icon: "cube-outline",
-          label: "My orders",
-          onPress: () => navigation.navigate("Orders"),
-        },
-      ],
-    },
+    /* ================= MY CHIT ================= */
     {
       title: "My Chit",
       items: [
@@ -35,6 +26,8 @@ export default function Profile() {
         },
       ],
     },
+
+    /* ================= ACCOUNT SETTINGS ================= */
     {
       title: "Account Settings",
       items: [
@@ -48,21 +41,18 @@ export default function Profile() {
           label: "Saved Address",
           onPress: () => navigation.navigate("SavedAddress"),
         },
-        {
-          icon: "card-outline",
-          label: "Payment Method",
-          onPress: () => navigation.navigate("Payment"),
-        },
-        {
-          icon: "settings-outline",
-          label: "Settings",
-          onPress: () => navigation.navigate("Settings"),
-        },
       ],
     },
+
+    /* ================= APP ================= */
     {
       title: "App",
       items: [
+        {
+          icon: "information-circle-outline",
+          label: "About CrackerShop",
+          onPress: () => navigation.navigate("AboutUs"),
+        },
         {
           icon: "share-social-outline",
           label: "Share App",
@@ -72,8 +62,8 @@ export default function Profile() {
                 message:
                   "Check out CrackerShop — download the app: https://example.com/download",
               });
-            } catch (err) {
-              console.log(err);
+            } catch (error) {
+              console.log(error);
             }
           },
         },
@@ -95,7 +85,7 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      {/* 🔙 Header like Orders */}
+      {/* HEADER */}
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -103,16 +93,18 @@ export default function Profile() {
         >
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.pageTitle}>Profile</Text>
       </View>
 
+      {/* PROFILE AVATAR */}
       <ProfileAvatar />
 
+      {/* PROFILE OPTIONS */}
       <View style={{ flex: 1 }}>
         <ProfileCard sections={sections} />
       </View>
 
+      {/* LOGOUT */}
       <TouchableOpacity
         style={styles.logoutBtn}
         onPress={() => console.log("logout pressed")}
@@ -123,13 +115,13 @@ export default function Profile() {
   );
 }
 
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f2f2f2",
   },
 
-  /* HEADER (Orders style) */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -145,7 +137,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* LOGOUT */
   logoutBtn: {
     backgroundColor: "#ff7f00",
     marginHorizontal: 50,

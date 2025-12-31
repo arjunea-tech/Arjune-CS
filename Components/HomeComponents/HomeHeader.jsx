@@ -9,7 +9,7 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => {} }
             {/* Header */}
             <View
                 className="w-full h-48 rounded-b-3xl px-6 pt-6 pb-4 justify-between overflow-hidden"
-                style={{ backgroundColor: COLORS.primary }}
+                style={{ backgroundColor: COLORS.primary}}
             >
                 {/* 🎆 LOTTIE BACKGROUND */}
                 <LottieView
@@ -28,8 +28,10 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => {} }
 
                 {/* CONTENT ABOVE LOTTIE */}
                 <View className="flex-row w-full items-center justify-between mt-5">
-                    <Text className="text-white text-2xl font-bold">NAME</Text>
-                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center" />
+                    <Text className="text-white text-2xl font-bold">3BEE CRACKER</Text>
+                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center ">
+                        <MaterialCommunityIcons name="" size={28} color={COLORS.primary} />
+                    </View>
                 </View>
 
                 <View className="h-4" />
