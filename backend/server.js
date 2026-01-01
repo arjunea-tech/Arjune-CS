@@ -21,6 +21,7 @@ const auth = require('./routes/auth');
 const orders = require('./routes/orders');
 const users = require('./routes/users');
 const chit = require('./routes/chit');
+const notifications = require('./routes/notifications');
 
 // Body parser
 app.use(express.json());
@@ -37,6 +38,8 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mount routers
+console.log('Mounting Notifications router...');
+app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/categories', categories);
 app.use('/api/v1/products', products);
 app.use('/api/v1/banners', banners);

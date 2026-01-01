@@ -14,6 +14,7 @@ import {
 import { THEME } from '../Components/ui/theme';
 import productsData from '../testing/ProductsTestData.json';
 import { productsAPI } from '../Components/api';
+import { resolveImageUrl } from '../Components/utils/imageUrl';
 
 export default function ProductView() {
   const params = useLocalSearchParams();
@@ -22,6 +23,7 @@ export default function ProductView() {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -34,14 +36,17 @@ export default function ProductView() {
       const res = await productsAPI.getProduct(id);
       if (res.success) {
         setProduct(res.data);
+        setSelectedImage(resolveImageUrl(res.data.image));
       } else {
         const local = productsData.find(p => String(p._id || p.id) === String(id));
         setProduct(local);
+        setSelectedImage(resolveImageUrl(local?.image));
       }
     } catch (e) {
       console.log('Error fetching product:', e);
       const local = productsData.find(p => String(p._id || p.id) === String(id));
       setProduct(local);
+      setSelectedImage(resolveImageUrl(local?.image));
     } finally {
       setLoading(false);
     }
@@ -84,6 +89,8 @@ export default function ProductView() {
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
+  const productImages = product.images && product.images.length > 0 ? product.images : [product.image];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* HEADER */}
@@ -98,7 +105,7 @@ export default function ProductView() {
       {/* IMAGE + PRICE */}
       <View style={styles.heroContainer}>
         <View style={styles.imageCard}>
-          <Image source={{ uri: product.image }} style={styles.fullImage} />
+          <Image source={{ uri: selectedImage }} style={styles.fullImage} />
 
           {/* ROUND PRICE BADGE */}
           <View style={styles.priceBadge}>
@@ -111,6 +118,29 @@ export default function ProductView() {
             )}
           </View>
         </View>
+
+        {/* Gallery Thumbnails */}
+        {productImages.length > 1 && (
+          <View style={styles.thumbnailContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {productImages.map((img, index) => {
+                const resolvedImg = resolveImageUrl(img);
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setSelectedImage(resolvedImg)}
+                    style={[
+                      styles.thumbnail,
+                      selectedImage === resolvedImg && styles.activeThumbnail
+                    ]}
+                  >
+                    <Image source={{ uri: resolvedImg }} style={styles.thumbnailImage} />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* BUTTONS (MOVED UP) */}
         <View style={styles.buttonRow}>
@@ -272,5 +302,27 @@ const styles = StyleSheet.create({
     borderColor: '#ff7f00',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  thumbnailContainer: {
+    flexDirection: 'row',
+    marginTop: 35,
+    paddingHorizontal: 16
+  },
+  thumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    overflow: 'hidden'
+  },
+  activeThumbnail: {
+    borderColor: THEME.colors.primary,
+    borderWidth: 2
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%'
   }
 });

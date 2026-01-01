@@ -6,13 +6,14 @@ import { Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View, Act
 import { Dropdown } from 'react-native-element-dropdown';
 import { THEME } from '../../Components/ui/theme';
 import { productsAPI, categoriesAPI } from '../../Components/api';
+import { resolveImageUrl } from '../../Components/utils/imageUrl';
 
 export default function AddNewProduct() {
     const params = useLocalSearchParams();
     const router = useRouter();
     const isEditMode = !!params.editId;
 
-    const [image, setImage] = useState(null);
+    const [images, setImages] = useState([]);
     const [name, setName] = useState('');
     const [category, setCategory] = useState(null);
     const [price, setPrice] = useState('');
@@ -56,14 +57,19 @@ export default function AddNewProduct() {
                 setName(p.name);
                 setPrice(String(p.price));
                 setDiscountPrice(p.discountPrice ? String(p.discountPrice) : '');
-                setImage(p.image);
+
+                // Handle legacy image and new images array
+                if (p.images && p.images.length > 0) {
+                    setImages(p.images);
+                } else if (p.image) {
+                    setImages([p.image]);
+                }
+
                 setStock(String(p.quantity || '0'));
                 setDescription(p.description || '');
                 setIsFeatured(p.isFeatured || false);
                 setIsDiwaliSpecial(p.isDiwaliSpecial || false);
 
-                // Assuming p.category is populated object or just ID
-                // Handle both cases if possible, usually better to request non-populated or handle check
                 const catId = typeof p.category === 'object' ? p.category._id : p.category;
                 setCategory(catId);
             }
@@ -78,14 +84,20 @@ export default function AddNewProduct() {
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
+            allowsMultipleSelection: true,
             quality: 1,
         });
 
         if (!result.canceled) {
-            setImage(result.assets[0].uri);
+            const newImages = result.assets.map(asset => asset.uri);
+            setImages([...images, ...newImages]);
         }
+    };
+
+    const removeImage = (index) => {
+        const updated = [...images];
+        updated.splice(index, 1);
+        setImages(updated);
     };
 
     const handleSave = async () => {
@@ -106,12 +118,22 @@ export default function AddNewProduct() {
             formData.append('isFeatured', isFeatured);
             formData.append('isDiwaliSpecial', isDiwaliSpecial);
 
-            if (image && !image.startsWith('http')) {
-                const filename = image.split('/').pop();
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : `image`;
-                formData.append('image', { uri: image, name: filename, type });
-            }
+            // Append images
+            images.forEach((img, index) => {
+                if (!img.startsWith('http')) {
+                    const filename = img.split('/').pop();
+                    const match = /\.(\w+)$/.exec(filename);
+                    const type = match ? `image/${match[1]}` : `image`;
+                    // Using 'images' as the field name to match backend upload.array('images')
+                    formData.append('images', { uri: img, name: filename, type });
+                } else {
+                    // We can track existing images too if needed, but the backend 
+                    // controller currently replaces the whole array if images are uploaded.
+                    // To support partial updates, we'd need more logic. 
+                    // For now, let's just send the URL as a string.
+                    formData.append('existingImages', img);
+                }
+            });
 
             let res;
             if (isEditMode) {
@@ -152,23 +174,38 @@ export default function AddNewProduct() {
                 </Text>
             </View>
             <ScrollView className="flex-1 bg-white p-5" showsVerticalScrollIndicator={false}>
-                {/* Image Upload Section */}
-                <TouchableOpacity
-                    onPress={pickImage}
-                    className="mb-6 h-48 w-full items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 overflow-hidden"
-                >
-                    {image ? (
-                        <Image source={{ uri: image }} className="h-full w-full" resizeMode="cover" />
-                    ) : (
-                        <View className="items-center justify-center">
-                            <View className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-                                <Ionicons name="camera" size={24} color="#FF6B00" />
+                {/* Multi-Image Upload Section */}
+                <View className="mb-6">
+                    <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Product Images</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                        {images.map((img, index) => (
+                            <View key={index} className="mr-3 relative h-40 w-40 rounded-2xl overflow-hidden border border-gray-100">
+                                <Image source={{ uri: resolveImageUrl(img) }} className="h-full w-full" resizeMode="cover" />
+                                <TouchableOpacity
+                                    onPress={() => removeImage(index)}
+                                    className="absolute top-2 right-2 bg-red-500/80 p-1.5 rounded-full"
+                                >
+                                    <Ionicons name="trash" size={16} color="white" />
+                                </TouchableOpacity>
                             </View>
-                            <Text className="font-bold text-gray-800">Upload Product Image</Text>
-                            <Text className="text-xs text-gray-500">Tap here to select from gallery</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
+                        ))}
+
+                        {images.length < 5 && (
+                            <TouchableOpacity
+                                onPress={pickImage}
+                                className="h-40 w-40 items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50"
+                            >
+                                <View className="items-center justify-center">
+                                    <View className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                                        <Ionicons name="add" size={24} color="#FF6B00" />
+                                    </View>
+                                    <Text className="text-[10px] font-bold text-gray-800">Add Image</Text>
+                                    <Text className="text-[8px] text-gray-500">{images.length}/5</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+                    </ScrollView>
+                </View>
 
                 {/* Form Fields */}
                 <View className="space-y-4 gap-4">

@@ -14,9 +14,14 @@ import { THEME } from '../../Components/ui/theme';
 import { authAPI } from '../../Components/api';
 import "../../Components/RegisterComponents/RegisterCard"
 
+import { useState } from 'react';
+
 export default function Register() {
+  const [loading, setLoading] = useState(false);
+
   const handleRegister = async (values) => {
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append('name', values.fullName);
       formData.append('email', values.email);
@@ -43,6 +48,8 @@ export default function Register() {
     } catch (error) {
       console.error('Registration error:', error);
       Alert.alert('Error', error.response?.data?.error || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +78,7 @@ export default function Register() {
         <RegisterCard
           onRegister={handleRegister}
           onGoogleLogin={handleGoogleRegister}
+          loading={loading}
         />
       </ScrollView>
     </KeyboardAvoidingView>

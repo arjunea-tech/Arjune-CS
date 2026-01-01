@@ -31,6 +31,11 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         default: 'no-image.jpg'
     },
+    images: [
+        {
+            type: String
+        }
+    ],
     isFeatured: {
         type: Boolean,
         default: false

@@ -137,7 +137,6 @@ export default function Home() {
     }
 
     if (parsedCategory) setActiveCategory(parsedCategory)
-    else if (qRaw.length === 0) setActiveCategory('all')
   }, [search, categories])
 
   return (

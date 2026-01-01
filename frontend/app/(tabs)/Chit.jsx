@@ -63,12 +63,47 @@ export default function Chit() {
   const handleJoin = (scheme) => {
     Alert.alert('Join Scheme', `To join ${scheme.name}, you need to pay the first installment of ₹${scheme.installmentAmount}.`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Pay Now', onPress: () => handlePayment(scheme) }
+      { text: 'Pay Now', onPress: () => handlePayment(scheme, 0) }
     ]);
   };
 
-  const handlePayment = (scheme) => {
-    Alert.alert('Coming Soon', 'Payment integration coming next.');
+  const handlePayment = async (scheme, customMonthIndex = null) => {
+    try {
+      setLoading(true);
+
+      // Simulate Payment Gateway
+      const simulatedPaymentSuccess = true;
+
+      if (simulatedPaymentSuccess) {
+        // Determine backend month index
+        // If joining, it's 0. If paying next, it's current monthsPaid
+        let monthIdx = customMonthIndex;
+        if (monthIdx === null) {
+          const myScheme = mySchemes.find(s => s.scheme?._id === scheme._id);
+          monthIdx = myScheme ? myScheme.monthsPaid : 0;
+        }
+
+        const res = await api.post('/chit/pay', {
+          schemeId: scheme._id,
+          amount: scheme.installmentAmount,
+          monthIndex: monthIdx
+        });
+
+        if (res.data.success) {
+          Alert.alert('Success', 'Payment successful! Your installment has been recorded.');
+          fetchMySchemes();
+          fetchSchemes();
+        }
+      } else {
+        Alert.alert('Error', 'Payment failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      const errorMsg = error.response?.data?.error || error.message || 'Payment failed';
+      Alert.alert('Error', errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderAvailableSchemes = () => (

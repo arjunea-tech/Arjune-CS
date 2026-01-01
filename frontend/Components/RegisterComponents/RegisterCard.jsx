@@ -25,7 +25,7 @@ const RegisterSchema = YUP.object().shape({
   state: YUP.string().required('State is required'),
 });
 
-export function RegisterCard({ onRegister, onGoogleLogin }) {
+export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
   const [agree, setAgree] = useState(false);
 
   const pickImage = async (setFieldValue) => {
@@ -220,6 +220,8 @@ export function RegisterCard({ onRegister, onGoogleLogin }) {
           <CustomButton
             title="REGISTER"
             onPress={handleSubmit}
+            loading={loading}
+            disabled={loading}
             customStyle={{ marginTop: 24 }}
           />
 

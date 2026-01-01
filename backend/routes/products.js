@@ -16,12 +16,12 @@ const router = express.Router();
 router
     .route('/')
     .get(getProducts)
-    .post(protect, authorize('admin'), upload.single('image'), createProduct);
+    .post(protect, authorize('admin'), upload.array('images', 5), createProduct);
 
 router
     .route('/:id')
     .get(getProduct)
-    .put(protect, authorize('admin'), upload.single('image'), updateProduct)
+    .put(protect, authorize('admin'), upload.array('images', 5), updateProduct)
     .delete(protect, authorize('admin'), deleteProduct);
 
 module.exports = router;

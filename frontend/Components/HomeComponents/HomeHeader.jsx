@@ -1,15 +1,46 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import LottieView from 'lottie-react-native'
-import { Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View, TouchableOpacity } from 'react-native'
 import { COLORS } from '../../constant/theme'
+import { useRouter } from 'expo-router'
+import { useState, useCallback } from 'react'
+import { notificationsAPI } from '../../Components/api'
+import { useFocusEffect } from '@react-navigation/native'
 
-export default function HomeHeader({ searchValue = '', onChangeText = () => {} }) {
+export default function HomeHeader({ searchValue = '', onChangeText = () => { } }) {
+    const router = useRouter();
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            const fetchUnreadCount = async () => {
+                try {
+                    const res = await notificationsAPI.getNotifications();
+                    if (res.success && isActive) {
+                        const count = res.data.filter(n => !n.isRead).length;
+                        setUnreadCount(count);
+                    }
+                } catch (error) {
+                    console.error('Error fetching unread count:', error);
+                }
+            };
+
+            fetchUnreadCount();
+
+            return () => {
+                isActive = false;
+            };
+        }, [])
+    );
+
     return (
         <View>
             {/* Header */}
             <View
                 className="w-full h-48 rounded-b-3xl px-6 pt-6 pb-4 justify-between overflow-hidden"
-                style={{ backgroundColor: COLORS.primary}}
+                style={{ backgroundColor: COLORS.primary }}
             >
                 {/* 🎆 LOTTIE BACKGROUND */}
                 <LottieView
@@ -29,9 +60,17 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => {} }
                 {/* CONTENT ABOVE LOTTIE */}
                 <View className="flex-row w-full items-center justify-between mt-5">
                     <Text className="text-white text-2xl font-bold">3BEE CRACKER</Text>
-                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center ">
-                        <MaterialCommunityIcons name="" size={28} color={COLORS.primary} />
-                    </View>
+                    <TouchableOpacity
+                        className="w-12 h-12 bg-white rounded-full items-center justify-center"
+                        onPress={() => router.push('/Notifications')}
+                    >
+                        <MaterialCommunityIcons name="bell-outline" size={28} color={COLORS.primary} />
+                        {unreadCount > 0 && (
+                            <View className="absolute top-1 right-1 bg-orange-600 rounded-full h-5 w-5 items-center justify-center border-2 border-white">
+                                <Text className="text-white text-[10px] font-bold">{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
                 </View>
 
                 <View className="h-4" />

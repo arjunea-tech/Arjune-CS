@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 
 export function CustomButton({
@@ -10,6 +11,7 @@ export function CustomButton({
   icon,
   variant = 'primary',
   customStyle,
+  loading,
   ...touchableProps
 }) {
   const buttonStyle =
@@ -18,9 +20,19 @@ export function CustomButton({
     variant === 'google' ? styles.googleButtonText : styles.primaryButtonText;
 
   return (
-    <TouchableOpacity style={[buttonStyle, customStyle]} {...touchableProps}>
-      {icon && <Ionicons name={icon} size={20} color="#FFF" />}
-      <Text style={[textStyle, icon && { marginLeft: 8 }]}>{title}</Text>
+    <TouchableOpacity
+      style={[buttonStyle, customStyle, loading && { opacity: 0.8 }]}
+      disabled={loading}
+      {...touchableProps}
+    >
+      {loading ? (
+        <ActivityIndicator color="#FFF" size="small" />
+      ) : (
+        <>
+          {icon && <Ionicons name={icon} size={20} color="#FFF" />}
+          <Text style={[textStyle, icon && { marginLeft: 8 }]}>{title}</Text>
+        </>
+      )}
     </TouchableOpacity>
   );
 }

@@ -100,6 +100,16 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
 
     const updatedOrder = await order.save();
 
+    // Notify user about order status change
+    const { createNotification } = require('../utils/notifications');
+    createNotification(
+        order.user,
+        'Order Status Updated 📦',
+        `Your order #${order._id.toString().slice(-6).toUpperCase()} is now ${updatedOrder.orderStatus}.`,
+        'order',
+        { orderId: order._id }
+    );
+
     res.status(200).json({
         success: true,
         data: updatedOrder

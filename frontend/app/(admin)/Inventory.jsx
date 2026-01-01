@@ -14,6 +14,7 @@ import {
 import { THEME } from '../../Components/ui/theme';
 import { productsAPI } from '../../Components/api';
 import { useFocusEffect } from '@react-navigation/native';
+import { resolveImageUrl } from '../../Components/utils/imageUrl';
 
 export default function Inventory() {
     const router = useRouter();
@@ -71,16 +72,41 @@ export default function Inventory() {
         });
     }, [products, search, activeFilter]);
 
+    const handleDelete = (id) => {
+        Alert.alert(
+            "Delete Product",
+            "Are you sure you want to delete this product?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const res = await productsAPI.deleteProduct(id);
+                            if (res.success) {
+                                setProducts(products.filter(p => p._id !== id));
+                            }
+                        } catch (error) {
+                            console.error('Delete failed:', error);
+                            Alert.alert("Error", "Failed to delete product");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const renderShowing = ({ item }) => {
         if (!item) return null;
-        const isOutOfStock = item.stock === 0;
+        const isOutOfStock = (item.stock === 0 || item.quantity === 0);
 
         return (
             <View className="mb-4 flex-row items-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
                 {/* Image */}
                 <View className="relative h-20 w-20">
                     <Image
-                        source={{ uri: item.image }}
+                        source={{ uri: resolveImageUrl(item.image) }}
                         className={`h-full w-full rounded-xl ${isOutOfStock ? 'opacity-50' : ''}`}
                         contentFit="cover"
                         transition={200}
@@ -117,16 +143,25 @@ export default function Inventory() {
 
                         {!isOutOfStock && (
                             <View className="rounded px-2 py-0.5 bg-green-100">
-                                <Text className="text-[10px] font-bold text-green-700">In Stock ({item.stock})</Text>
+                                <Text className="text-[10px] font-bold text-green-700">In Stock ({item.stock || item.quantity})</Text>
                             </View>
                         )}
 
-                        <TouchableOpacity
-                            className="ml-2 bg-gray-100 p-1.5 rounded-full"
-                            onPress={() => router.push({ pathname: '/(admin)/AddNewProduct', params: { editId: item._id } })}
-                        >
-                            <Ionicons name="pencil" size={14} color="#6B7280" />
-                        </TouchableOpacity>
+                        <View className="flex-row gap-2">
+                            <TouchableOpacity
+                                className="bg-gray-100 p-1.5 rounded-full"
+                                onPress={() => router.push({ pathname: '/(admin)/AddNewProduct', params: { editId: item._id } })}
+                            >
+                                <Ionicons name="pencil" size={14} color="#6B7280" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                className="bg-red-50 p-1.5 rounded-full"
+                                onPress={() => handleDelete(item._id)}
+                            >
+                                <Ionicons name="trash-outline" size={14} color="#EF4444" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </View>

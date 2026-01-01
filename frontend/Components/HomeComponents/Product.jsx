@@ -4,6 +4,7 @@ import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { COLORS } from '../../constant/theme'
 import { useCart } from '../CartComponents/CartContext'
+import { resolveImageUrl } from '../utils/imageUrl'
 
 const Product = ({ product = {}, horizontal = false }) => {
   const navigateToProductView = () => {
@@ -39,7 +40,7 @@ const Product = ({ product = {}, horizontal = false }) => {
       {/* Image */}
       {product?.image ? (
         <Image
-          source={{ uri: product.image }}
+          source={{ uri: resolveImageUrl(product.image) }}
           style={{ width: '100%', height: 70, borderRadius: 10 }}
           contentFit="cover"
           transition={200}

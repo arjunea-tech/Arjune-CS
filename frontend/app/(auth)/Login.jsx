@@ -13,11 +13,15 @@ import { LoginCard } from '../../Components/LoginComponents/LoginCard';
 import { THEME } from '../../Components/ui/theme';
 import { useAuth } from '../../Components/utils/AuthContext';
 
+import { useState } from 'react';
+
 export default function Login() {
   const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (email, password) => {
     try {
+      setLoading(true);
       // Call backend API for authentication
       const response = await authAPI.login(email, password);
 
@@ -43,6 +47,8 @@ export default function Login() {
         ? (error.message || JSON.stringify(error))
         : error;
       Alert.alert('Login Failed', errorMessage || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,6 +91,7 @@ export default function Login() {
           onGoogleLogin={handleGoogleLogin}
           onSignUp={handleSignUp}
           onForgetPassword={handleForgetPassword}
+          loading={loading}
         />
       </ScrollView>
     </KeyboardAvoidingView>

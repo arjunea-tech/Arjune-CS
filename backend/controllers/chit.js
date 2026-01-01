@@ -132,6 +132,29 @@ exports.getMySchemes = async (req, res, next) => {
 
         const mySchemes = Object.values(schemesMap);
 
+        // Check for payment reminders
+        const { createNotification } = require('../utils/notifications');
+        mySchemes.forEach(item => {
+            const { scheme, monthsPaid, payments } = item;
+            if (monthsPaid < scheme.durationMonths) {
+                const today = new Date();
+                const lastPaymentMonth = payments.length > 0
+                    ? Math.max(...payments.map(p => p.monthIndex))
+                    : -1;
+
+                // If today is past the 10th and they haven't paid for the current target month
+                if (today.getDate() > 10 && lastPaymentMonth < monthsPaid) {
+                    createNotification(
+                        req.user.id,
+                        'Chit Payment Reminder ⏰',
+                        `It's time to pay your installment for ${scheme.name}. Keep your savings growing!`,
+                        'chit',
+                        { schemeId: scheme._id }
+                    );
+                }
+            }
+        });
+
         res.status(200).json({
             success: true,
             count: mySchemes.length,
@@ -177,6 +200,16 @@ exports.payInstallment = async (req, res, next) => {
             monthIndex,
             status: 'Paid'
         });
+
+        // Notify user about payment confirmation
+        const { createNotification } = require('../utils/notifications');
+        createNotification(
+            req.user.id,
+            'Chit Payment Received! 💰',
+            `Your payment of ₹${amount} for ${scheme.name} (Month ${monthIndex + 1}) has been confirmed.`,
+            'chit',
+            { schemeId: scheme._id, paymentId: payment._id }
+        );
 
         res.status(201).json({
             success: true,

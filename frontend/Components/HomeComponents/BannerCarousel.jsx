@@ -4,6 +4,7 @@ import { useSharedValue } from 'react-native-reanimated'
 import Carousel, { Pagination } from 'react-native-reanimated-carousel'
 import { COLORS } from '../../constant/theme'
 import banners from '../../testing/BannerTestData.json'
+import { resolveImageUrl } from '../utils/imageUrl'
 
 const { width } = Dimensions.get('window')
 
@@ -39,7 +40,7 @@ export default function BannerCarousel({ data = banners }) {
         renderItem={({ item }) => (
           <View className="mx-4 h-full rounded-2xl overflow-hidden" style={{ width: width - 32 }}>
             <Image
-              source={{ uri: item.image }}
+              source={{ uri: resolveImageUrl(item.image) }}
               style={{ width: '100%', height: '100%', borderRadius: 16 }}
               contentFit="cover"
               transition={200}

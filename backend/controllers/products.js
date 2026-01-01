@@ -33,15 +33,37 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/products
 // @access  Private/Admin
 exports.createProduct = asyncHandler(async (req, res, next) => {
-    if (req.file) {
+    // Handle multiple images if uploaded
+    if (req.files && req.files.length > 0) {
+        const images = req.files.map(file => {
+            let url = file.path;
+            if (!url.startsWith('http')) {
+                url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+            }
+            return url;
+        });
+        req.body.images = images;
+        req.body.image = images[0]; // Set first image as primary
+    } else if (req.file) {
+        // Fallback for single image upload
         let image = req.file.path;
         if (!image.startsWith('http')) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         req.body.image = image;
+        req.body.images = [image];
     }
 
     const product = await Product.create(req.body);
+
+    // Notify all users about the new product
+    const { notifyAllUsers } = require('../utils/notifications');
+    notifyAllUsers(
+        'New Product Added! 🎆',
+        `${product.name} is now available for ₹${product.price}. Check it out!`,
+        'promotion',
+        { productId: product._id }
+    );
 
     res.status(201).json({
         success: true,
@@ -59,12 +81,24 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
         return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    if (req.file) {
+    // Handle multiple images if uploaded
+    if (req.files && req.files.length > 0) {
+        const images = req.files.map(file => {
+            let url = file.path;
+            if (!url.startsWith('http')) {
+                url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+            }
+            return url;
+        });
+        req.body.images = images;
+        req.body.image = images[0]; // Set first image as primary
+    } else if (req.file) {
         let image = req.file.path;
         if (!image.startsWith('http')) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         req.body.image = image;
+        req.body.images = [image];
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
@@ -88,7 +122,7 @@ exports.deleteProduct = asyncHandler(async (req, res, next) => {
         return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    await product.remove();
+    await product.deleteOne();
 
     res.status(200).json({
         success: true,

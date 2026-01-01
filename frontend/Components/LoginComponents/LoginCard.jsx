@@ -1,10 +1,10 @@
 import { Formik } from 'formik';
 import {
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import * as YUP from 'yup';
 import { CustomButton } from './CustomButton';
@@ -25,6 +25,7 @@ export function LoginCard({
   onGoogleLogin,
   onSignUp,
   onForgetPassword,
+  loading,
 }) {
   return (
     <Formik
@@ -76,6 +77,8 @@ export function LoginCard({
           <CustomButton
             title="LOGIN"
             onPress={() => handleSubmit()}
+            loading={loading}
+            disabled={loading}
             customStyle={{ marginTop: 24 }}
           />
 
