@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, FlatList, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { Alert, FlatList, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
-import bannersData from '../../testing/BannerTestData.json';
+import { bannersAPI } from '../../Components/api';
 
 export default function BannerManagement() {
     const router = useRouter();
-    const [banners, setBanners] = useState(bannersData);
+    const [banners, setBanners] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     // Edit Modal State
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -15,9 +16,29 @@ export default function BannerManagement() {
     const [editForm, setEditForm] = useState({
         title: '',
         subtitle: '',
-        image: '',
+        image: '', // URL string or empty if not changing
         link: ''
     });
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchBanners();
+        }, [])
+    );
+
+    const fetchBanners = async () => {
+        try {
+            setLoading(true);
+            const res = await bannersAPI.getBanners();
+            if (res.success) {
+                setBanners(res.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch banners', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleDelete = (id) => {
         Alert.alert(
@@ -28,9 +49,17 @@ export default function BannerManagement() {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: () => {
-                        setBanners(prev => prev.filter(b => b.id !== id));
-                        alert('Banner Deleted Successfully!');
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await bannersAPI.deleteBanner(id);
+                            fetchBanners(); // Refresh list
+                            Alert.alert('Success', 'Banner Deleted Successfully!');
+                        } catch (error) {
+                            Alert.alert("Error", "Failed to delete banner");
+                        } finally {
+                            setLoading(false);
+                        }
                     }
                 }
             ]
@@ -41,24 +70,51 @@ export default function BannerManagement() {
         setCurrentBanner(banner);
         setEditForm({
             title: banner.title,
-            subtitle: banner.subtitle,
+            subtitle: banner.subtitle || '',
             image: banner.image,
-            link: banner.link
+            link: banner.link || ''
         });
         setIsEditModalVisible(true);
     };
 
-    const handleSaveEdit = () => {
-        if (!editForm.title || !editForm.image) {
-            alert('Title and Image URL are required!');
+    const handleSaveEdit = async () => {
+        if (!editForm.title) {
+            alert('Title is required!');
             return;
         }
 
-        setBanners(prev => prev.map(b =>
-            b.id === currentBanner.id ? { ...b, ...editForm } : b
-        ));
-        setIsEditModalVisible(false);
-        alert('Banner Updated Successfully!');
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('title', editForm.title);
+            formData.append('subtitle', editForm.subtitle);
+            formData.append('link', editForm.link);
+
+            // Image handling for update is tricky if we don't pick a new one.
+            // If the user pasted a URL, we might just leave it if backend ignores 'image' unless it's a file.
+            // The backend 'updateBanner' uses upload.single('image').
+            // If we don't send a new file, it usually keeps the old one.
+            // But if the user WANTS to change the image, they need a picker in the modal, which is currently just a TextInput for URL (in original code).
+            // Original code had `TextInput` for Image URL. Our backend expects FILE upload or String URL?
+            // Backend `createBanner` uses `upload.single`.
+            // The `Banner` model stores content.
+            // If the original mock data used URLs, the new system uses uploaded files (storage path).
+            // So editing image via URL text input is not compatible with file upload backend unless backend supports it.
+            // I will assume for now we only edit text fields here to keep it simple, or I should add ImagePicker to Modal. 
+            // Given complexity, I will just send text updates. If they want to change image, maybe delete and recreate?
+            // OR I can add ImagePicker to Modal. Let's stick to text updates for now to avoid complexity in this modal.
+
+            await bannersAPI.updateBanner(currentBanner._id, formData);
+
+            setIsEditModalVisible(false);
+            fetchBanners();
+            Alert.alert('Success', 'Banner Updated Successfully!');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to update banner');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleAddBanner = () => {
@@ -68,7 +124,7 @@ export default function BannerManagement() {
     const renderBannerItem = ({ item }) => (
         <View className="mb-4 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
             <Image
-                source={{ uri: item.image }}
+                source={{ uri: item.image }} // Assuming full URL from backend or cloud
                 className="w-full h-32"
                 resizeMode="cover"
             />
@@ -87,7 +143,7 @@ export default function BannerManagement() {
                     </TouchableOpacity>
                     <TouchableOpacity
                         className="p-2 bg-red-50 rounded-full"
-                        onPress={() => handleDelete(item.id)}
+                        onPress={() => handleDelete(item._id)}
                     >
                         <Ionicons name="trash-outline" size={20} color="#EF4444" />
                     </TouchableOpacity>
@@ -117,26 +173,32 @@ export default function BannerManagement() {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
-                data={banners}
-                keyExtractor={item => item.id}
-                renderItem={renderBannerItem}
-                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-                showsVerticalScrollIndicator={false}
-                ListHeaderComponent={() => (
-                    <View className="mb-4">
-                        <Text className="text-gray-500 text-sm">
-                            Manage the banners displayed in the home screen carousel.
-                        </Text>
-                    </View>
-                )}
-                ListEmptyComponent={() => (
-                    <View className="mt-10 items-center justify-center">
-                        <Ionicons name="images-outline" size={64} color="#D1D5DB" />
-                        <Text className="text-gray-400 mt-2 font-medium">No banners found</Text>
-                    </View>
-                )}
-            />
+            {loading ? (
+                <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator size="large" color={THEME.colors.primary} />
+                </View>
+            ) : (
+                <FlatList
+                    data={banners}
+                    keyExtractor={item => item._id}
+                    renderItem={renderBannerItem}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                    ListHeaderComponent={() => (
+                        <View className="mb-4">
+                            <Text className="text-gray-500 text-sm">
+                                Manage the banners displayed in the home screen carousel.
+                            </Text>
+                        </View>
+                    )}
+                    ListEmptyComponent={() => (
+                        <View className="mt-10 items-center justify-center">
+                            <Ionicons name="images-outline" size={64} color="#D1D5DB" />
+                            <Text className="text-gray-400 mt-2 font-medium">No banners found</Text>
+                        </View>
+                    )}
+                />
+            )}
 
             {/* Edit Modal */}
             <Modal
@@ -172,16 +234,6 @@ export default function BannerManagement() {
                                     value={editForm.subtitle}
                                     onChangeText={(text) => setEditForm(prev => ({ ...prev, subtitle: text }))}
                                     placeholder="Enter banner subtitle"
-                                />
-                            </View>
-
-                            <View className="mb-4">
-                                <Text className="text-sm font-bold text-gray-700 mb-2">Image URL</Text>
-                                <TextInput
-                                    className="border border-gray-200 rounded-xl p-3 bg-gray-50 text-xs"
-                                    value={editForm.image}
-                                    onChangeText={(text) => setEditForm(prev => ({ ...prev, image: text }))}
-                                    placeholder="Enter image URL"
                                 />
                             </View>
 

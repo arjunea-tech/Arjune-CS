@@ -1,52 +1,84 @@
+
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Modal, ScrollView, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import api from '../../Components/api/config';
 
 export default function OrderDetails() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const id = params.id;
+    const [order, setOrder] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const navigation = useNavigation();
 
-    // Mock Data
-    const order = {
-        id: 'ORD-1001',
-        date: 'Oct 12, 2023 10:30 AM',
-        status: 'Pending',
-        customer: {
-            name: 'Aarav Patel',
-            email: 'aarav.patel@example.com',
-            phone: '+91 98765 43210'
-        },
-        address: 'B-403, Galaxy Heights, Near MG Road, Bangalore, Karnataka - 560001',
-        items: [
-            { name: 'Premium Diya Set', qty: 2, price: '₹499', total: '₹998' },
-            { name: 'Laptop Sleeve', qty: 1, price: '₹1,200', total: '₹1,200' },
-        ],
-        payment: {
-            method: 'UPI',
-            subtotal: '₹2,198',
-            tax: '₹396',
-            shipping: '₹50',
-            total: '₹2,644'
+    useEffect(() => {
+        if (id) fetchOrder();
+    }, [id]);
+
+    const fetchOrder = async () => {
+        try {
+            const res = await api.get(`/orders/${id}`);
+            if (res.data.success) {
+                setOrder(mapBackendToUI(res.data.data));
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to load order DETAILS');
         }
     };
 
-    const [currentStatus, setCurrentStatus] = useState(order.status);
-    const [modalVisible, setModalVisible] = useState(false);
+    const mapBackendToUI = (o) => ({
+        id: o._id,
+        date: new Date(o.createdAt).toLocaleString(),
+        status: o.orderStatus,
+        customer: {
+            name: o.user?.name || 'Guest',
+            email: o.user?.email || 'N/A',
+            phone: o.shippingAddress?.phone || 'N/A' // Assuming shippingAddress has phone
+        },
+        address: o.shippingAddress, // Assuming string or object with toString? shippingAddress in model is String.
+        items: o.orderItems.map(i => ({
+            name: i.name,
+            qty: i.qty,
+            price: i.price,
+            total: i.qty * i.price
+        })),
+        payment: {
+            method: o.paymentMethod,
+            subtotal: `₹${o.itemsPrice}`,
+            tax: `₹${o.taxPrice}`,
+            shipping: `₹${o.shippingPrice}`,
+            total: `₹${o.totalPrice}`
+        }
+    });
 
-    const steps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
-
-    // Helper to check if step is completed based on current status index
-    const isStepCompleted = (stepName) => {
-        const statusOrder = ['Pending', 'Processing', 'Shipped', 'Delivered'];
-        const currentIndex = statusOrder.indexOf(currentStatus);
-        const stepIndex = statusOrder.indexOf(stepName);
-        return stepIndex <= currentIndex;
+    const handleUpdateStatus = async (newStatus) => {
+        try {
+            const res = await api.put(`/orders/${id}/status`, { status: newStatus });
+            if (res.data.success) {
+                Alert.alert('Success', `Status updated to ${newStatus}`);
+                fetchOrder();
+                setModalVisible(false);
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update status');
+        }
     };
 
-    const handleUpdateStatus = (newStatus) => {
-        setCurrentStatus(newStatus);
-        setModalVisible(false);
+    if (!order) return <View className="flex-1 items-center justify-center"><Text>Loading...</Text></View>;
+
+    const steps = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+    // Backend uses 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'. 'Pending' might be mapped to 'Processing' or we align UI.
+    // UI steps: ['Pending', 'Processing', 'Shipped', 'Delivered'] in previous code.
+    // Let's align with backend enum: Processing, Shipped, Out for Delivery, Delivered.
+
+    const isStepCompleted = (stepName) => {
+        const statusOrder = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+        const currentIndex = statusOrder.indexOf(order.status);
+        const stepIndex = statusOrder.indexOf(stepName);
+        return stepIndex <= currentIndex;
     };
 
     const StatusStep = ({ label, isCompleted, isLast }) => (
@@ -64,8 +96,6 @@ export default function OrderDetails() {
         </View>
     );
 
-    const navigation = useNavigation();
-
     return (
         <View className="flex-1 bg-gray-50">
             {/* Header */}
@@ -77,7 +107,7 @@ export default function OrderDetails() {
                     <Text className="text-xl font-bold text-gray-800">Order Details</Text>
                 </View>
                 <View className="bg-orange-100 px-3 py-1 rounded-full">
-                    <Text className="text-orange-700 text-xs font-bold">{currentStatus}</Text>
+                    <Text className="text-orange-700 text-xs font-bold">{order.status}</Text>
                 </View>
             </View>
 
@@ -85,7 +115,7 @@ export default function OrderDetails() {
                 {/* Order ID & Date */}
                 <View className="mb-6 flex-row justify-between items-center">
                     <View>
-                        <Text className="text-2xl font-bold text-gray-800">{order.id}</Text>
+                        <Text className="text-2xl font-bold text-gray-800">#{order.id.substring(order.id.length - 6)}</Text>
                         <Text className="text-sm text-gray-500">{order.date}</Text>
                     </View>
                     <TouchableOpacity className="bg-white p-2 rounded-lg border border-gray-200">
@@ -96,12 +126,12 @@ export default function OrderDetails() {
                 {/* Tracking Step */}
                 <View className="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-100">
                     <Text className="text-sm font-bold text-gray-500 uppercase mb-4">Order Status</Text>
-                    {steps.map((step, index) => (
+                    {['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].map((step, index) => (
                         <StatusStep
                             key={step}
                             label={step}
                             isCompleted={isStepCompleted(step)}
-                            isLast={index === steps.length - 1}
+                            isLast={index === 3}
                         />
                     ))}
                 </View>
@@ -120,7 +150,7 @@ export default function OrderDetails() {
                                     <Text className="text-xs text-gray-500">Qty: {item.qty} x {item.price}</Text>
                                 </View>
                             </View>
-                            <Text className="font-bold text-gray-800">{item.total}</Text>
+                            <Text className="font-bold text-gray-800">₹{item.total}</Text>
                         </View>
                     ))}
                 </View>
@@ -195,10 +225,10 @@ export default function OrderDetails() {
                             <TouchableOpacity
                                 key={status}
                                 onPress={() => handleUpdateStatus(status)}
-                                className={`mb-3 p-4 rounded-xl border ${currentStatus === status ? 'bg-orange-50 border-orange-500' : 'bg-gray-50 border-gray-200'} flex-row items-center justify-between`}
+                                className={`mb-3 p-4 rounded-xl border ${order.status === status ? 'bg-orange-50 border-orange-500' : 'bg-gray-50 border-gray-200'} flex-row items-center justify-between`}
                             >
-                                <Text className={`font-bold ${currentStatus === status ? 'text-orange-700' : 'text-gray-700'}`}>{status}</Text>
-                                {currentStatus === status && <Ionicons name="checkmark-circle" size={24} color="#FF6B00" />}
+                                <Text className={`font-bold ${order.status === status ? 'text-orange-700' : 'text-gray-700'}`}>{status}</Text>
+                                {order.status === status && <Ionicons name="checkmark-circle" size={24} color="#FF6B00" />}
                             </TouchableOpacity>
                         ))}
 

@@ -35,6 +35,36 @@ const UserSchema = new mongoose.Schema({
     avatar: {
         type: String
     },
+    mobileNumber: {
+        type: String,
+        required: [true, 'Please add a mobile number']
+    },
+    address: {
+        type: String,
+        required: [true, 'Please add an address']
+    },
+    pincode: {
+        type: String,
+        required: [true, 'Please add a pincode']
+    },
+    district: {
+        type: String,
+        required: [true, 'Please add a district']
+    },
+    state: {
+        type: String,
+        required: [true, 'Please add a state']
+    },
+    addresses: [
+        {
+            label: { type: String, default: 'Home' },
+            address: { type: String, required: true },
+            pincode: { type: String, required: true },
+            district: { type: String, required: true },
+            state: { type: String, required: true },
+            isDefault: { type: Boolean, default: false }
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now
@@ -42,9 +72,9 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Encrypt password using bcrypt
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        next();
+        return;
     }
 
     const salt = await bcrypt.genSalt(10);

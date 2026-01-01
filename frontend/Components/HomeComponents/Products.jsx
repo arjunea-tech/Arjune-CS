@@ -31,7 +31,7 @@ export default function Products({ data = productsData, onClear = () => { } }) {
         <FlatList
           data={list}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => (item._id || item.id || '').toString()}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
           scrollEnabled={false}

@@ -55,24 +55,25 @@ api.interceptors.response.use(
         return response;
     },
     async (error) => {
+        let errorMessage = 'An error occurred';
+
         if (error.response) {
             // Server responded with error
             const { status, data } = error.response;
+            errorMessage = data.error || data.message || `Error: ${status}`;
 
             if (status === 401) {
-                // Unauthorized - clear user data and redirect to login
                 await AsyncStorage.removeItem('user');
-                // You can emit an event here to trigger logout in your app
             }
-
-            return Promise.reject(data.error || 'An error occurred');
         } else if (error.request) {
             // Request made but no response
-            return Promise.reject('Network error. Please check your connection.');
+            errorMessage = 'Network error. Please check your connection.';
         } else {
             // Something else happened
-            return Promise.reject(error.message);
+            errorMessage = error.message || 'Something went wrong';
         }
+
+        return Promise.reject(new Error(errorMessage));
     }
 );
 

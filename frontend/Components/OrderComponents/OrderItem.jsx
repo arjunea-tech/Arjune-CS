@@ -1,21 +1,18 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import productsData from '../../testing/ProductsTestData.json';
+// import productsData from '../../testing/ProductsTestData.json';
 import { THEME } from '../ui/theme';
 import { formatCurrency } from '../utils/format';
 
 export default function OrderItem({ item }) {
-  const product = productsData.find(p => String(p.id) === String(item.productId));
-  if (!product) return null;
-
-  const total = (product.price || 0) * item.quantity;
+  const total = (item.price || 0) * item.qty;
 
   return (
     <View style={styles.row}>
       <View style={styles.card}>
-        <Image source={product.image ? { uri: product.image } : null} style={styles.image} />
+        <Image source={item.image ? { uri: item.image } : null} style={styles.image} />
         <View style={{ flex: 1, paddingLeft: 12 }}>
-          <Text style={styles.title} numberOfLines={2}>{product.name}</Text>
-          <Text style={styles.meta}>Qty: {item.quantity}</Text>
+          <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.meta}>Qty: {item.qty}</Text>
         </View>
         <View style={styles.right}>
           <Text style={styles.price}>${formatCurrency(total)}</Text>

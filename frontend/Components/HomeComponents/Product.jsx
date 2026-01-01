@@ -7,7 +7,8 @@ import { useCart } from '../CartComponents/CartContext'
 
 const Product = ({ product = {}, horizontal = false }) => {
   const navigateToProductView = () => {
-    if (product?.id) router.push(`/ProductView?id=${product.id}`)
+    const id = product._id || product.id;
+    if (id) router.push(`/ProductView?id=${id}`)
     else router.push('/ProductView')
   }
 
@@ -16,6 +17,8 @@ const Product = ({ product = {}, horizontal = false }) => {
     e?.stopPropagation?.();
     addItem(product, 1);
   }
+
+  const hasDiscount = product.discountPrice && product.discountPrice < product.price;
 
   return (
     <TouchableOpacity
@@ -51,12 +54,25 @@ const Product = ({ product = {}, horizontal = false }) => {
       </Text>
 
       {/* Price */}
-      <Text className="text-xs text-gray-600 mt-1">
-        ${product?.price?.toFixed ? product.price.toFixed(2) : (product?.price ?? '0.00')}
-      </Text>
+      <View className="mt-1 flex-row items-center flex-wrap">
+        {hasDiscount ? (
+          <>
+            <Text className="text-xs text-gray-500 line-through mr-2">
+              ₹{product.price?.toFixed(2)}
+            </Text>
+            <Text className="text-sm font-semibold text-orange-500">
+              ₹{product.discountPrice?.toFixed(2)}
+            </Text>
+          </>
+        ) : (
+          <Text className="text-sm font-semibold text-gray-800">
+            ₹{product?.price?.toFixed ? product.price.toFixed(2) : (product?.price ?? '0.00')}
+          </Text>
+        )}
+      </View>
 
       {/* Button */}
-      <TouchableOpacity className="mt-3 py-3 rounded-md items-center" style={{ backgroundColor: COLORS.primary }} onPress={() => addToCart()}>
+      <TouchableOpacity className="mt-3 py-3 rounded-md items-center" style={{ backgroundColor: COLORS.primary }} onPress={addToCart}>
         <Text className="text-white text-sm font-semibold">Add to Cart</Text>
       </TouchableOpacity>
     </TouchableOpacity>

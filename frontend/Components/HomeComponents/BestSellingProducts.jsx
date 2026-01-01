@@ -18,7 +18,7 @@ export default function BestSellingProducts({ data = productsData }) {
       <FlatList
         data={list}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => (item._id || item.id || '').toString()}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingRight: 16 }}

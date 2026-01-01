@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -7,23 +8,81 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  ActivityIndicator
 } from 'react-native';
 import { THEME } from '../Components/ui/theme';
 import productsData from '../testing/ProductsTestData.json';
+import { productsAPI } from '../Components/api';
 
 export default function ProductView() {
   const params = useLocalSearchParams();
   const router = useRouter();
-
   const id = params?.id;
-  const product = productsData.find(p => String(p.id) === String(id));
 
-  if (!product) return null;
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const originalPrice = product.price;
-  const discount = 5;
-  const discountedPrice = originalPrice - (originalPrice * discount) / 100;
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  const fetchProduct = async () => {
+    try {
+      const res = await productsAPI.getProduct(id);
+      if (res.success) {
+        setProduct(res.data);
+      } else {
+        const local = productsData.find(p => String(p._id || p.id) === String(id));
+        setProduct(local);
+      }
+    } catch (e) {
+      console.log('Error fetching product:', e);
+      const local = productsData.find(p => String(p._id || p.id) === String(id));
+      setProduct(local);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={THEME.colors.primary} />
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (!product) {
+    // Fallback: Show loading or error, or try finding in global store if implemented.
+    // For this user request, we assume data propagation works via list. 
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Details</Text>
+          <View style={{ width: 28 }} />
+        </View>
+        <View className="flex-1 items-center justify-center">
+          <Text>Product not found</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  const originalPrice = product.price || 0;
+  const hasDiscount = product.discountPrice && product.discountPrice < originalPrice;
+  const currentPrice = hasDiscount ? product.discountPrice : originalPrice;
+  // Calculate percentage logic for display
+  const discountPercent = hasDiscount
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -43,9 +102,13 @@ export default function ProductView() {
 
           {/* ROUND PRICE BADGE */}
           <View style={styles.priceBadge}>
-            <Text style={styles.discountedPrice}>₹{discountedPrice.toFixed(0)}</Text>
-            <Text style={styles.originalPrice}>₹{originalPrice}</Text>
-            <Text style={styles.discountText}>{discount}% OFF</Text>
+            <Text style={styles.discountedPrice}>₹{currentPrice.toFixed(0)}</Text>
+            {hasDiscount && (
+              <>
+                <Text style={styles.originalPrice}>₹{originalPrice}</Text>
+                <Text style={styles.discountText}>{discountPercent}% OFF</Text>
+              </>
+            )}
           </View>
         </View>
 

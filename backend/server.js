@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const path = require('path');
 
 // Load env vars
 dotenv.config();
@@ -17,6 +18,9 @@ const categories = require('./routes/categories');
 const products = require('./routes/products');
 const banners = require('./routes/banners');
 const auth = require('./routes/auth');
+const orders = require('./routes/orders');
+const users = require('./routes/users');
+const chit = require('./routes/chit');
 
 // Body parser
 app.use(express.json());
@@ -29,11 +33,17 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
+// Set static folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Mount routers
 app.use('/api/v1/categories', categories);
 app.use('/api/v1/products', products);
 app.use('/api/v1/banners', banners);
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/users', users);
+app.use('/api/v1/orders', orders);
+app.use('/api/v1/chit', chit);
 
 // Error handler middleware
 const errorHandler = require('./middleware/error');

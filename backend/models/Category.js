@@ -11,6 +11,9 @@ const CategorySchema = new mongoose.Schema({
         type: String,
         default: 'no-image.jpg'
     },
+    description: {
+        type: String
+    },
     status: {
         type: String,
         enum: ['Active', 'Inactive'],

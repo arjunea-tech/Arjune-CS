@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -10,19 +10,57 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  ActivityIndicator
 } from "react-native";
+import { useAuth } from "../Components/utils/AuthContext";
+import { authAPI } from "../Components/api";
 
 export default function EditProfile() {
   const navigation = useNavigation();
+  const { user, login } = useAuth();
 
-  const [profileImage, setProfileImage] = useState(null);
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [pincode, setPincode] = useState("");
-  const [district, setDistrict] = useState("");
-  const [state, setState] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [profileImage, setProfileImage] = useState(user?.avatar || null);
+  const [name, setName] = useState(user?.name || "");
+  const [address, setAddress] = useState(user?.address || "");
+  const [pincode, setPincode] = useState(user?.pincode || "");
+  const [district, setDistrict] = useState(user?.district || "");
+  const [state, setState] = useState(user?.state || "");
+  const [mobile, setMobile] = useState(user?.mobileNumber || "");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const res = await authAPI.getMe();
+      if (res.success) {
+        await login({
+          token: user.token,
+          ...res.data
+        });
+      }
+    } catch (error) {
+      console.error('Refresh profile error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      setProfileImage(user.avatar || null);
+      setName(user.name || "");
+      setAddress(user.address || "");
+      setPincode(user.pincode || "");
+      setDistrict(user.district || "");
+      setState(user.state || "");
+      setMobile(user.mobileNumber || "");
+    }
+  }, [user]);
 
   /* ---------------- Image Picker ---------------- */
   const pickImage = async () => {
@@ -45,14 +83,45 @@ export default function EditProfile() {
   };
 
   /* ---------------- Save ---------------- */
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !address || !pincode || !mobile) {
       Alert.alert("Error", "Please fill all required fields");
       return;
     }
- 
-    Alert.alert("Success", "Profile updated successfully");
-    navigation.goBack();
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('mobileNumber', mobile);
+      formData.append('address', address);
+      formData.append('pincode', pincode);
+      formData.append('district', district);
+      formData.append('state', state);
+
+      if (profileImage && profileImage !== user?.avatar) {
+        const filename = profileImage.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        formData.append('avatar', { uri: profileImage, name: filename, type });
+      }
+
+      const res = await authAPI.updateDetails(formData);
+      if (res.success) {
+        // Update local auth context with new user data
+        await login({
+          token: user.token, // Keep existing token
+          ...res.data
+        });
+        Alert.alert("Success", "Profile updated successfully");
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Update profile error:', error.message);
+      Alert.alert("Error", error.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ---------------- Pincode ---------------- */
@@ -178,8 +247,16 @@ export default function EditProfile() {
       </View>
 
       {/* ---------- Save ---------- */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-        <Text style={styles.saveText}>SAVE</Text>
+      <TouchableOpacity
+        style={[styles.saveBtn, loading && { opacity: 0.7 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.saveText}>SAVE</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );

@@ -14,46 +14,55 @@ const users = [
         email: 'admin@gmail.com',
         password: 'admin123',
         role: 'admin',
-        status: 'active'
+        mobileNumber: '9876543210',
+        address: '123 Admin Street, Admin City',
+        pincode: '600001',
+        district: 'Chennai',
+        state: 'Tamil Nadu'
     },
     {
         name: 'Prakash',
         email: 'prakash@gmail.com',
         password: '12345678',
         role: 'customer',
-        status: 'active'
+        mobileNumber: '9988776655',
+        address: '45 Customer Lane, Tech Park',
+        pincode: '600002',
+        district: 'Chennai',
+        state: 'Tamil Nadu'
     },
     {
         name: 'Arjune',
         email: 'arjune@gmail.com',
         password: '87654321',
         role: 'customer',
-        status: 'active'
+        mobileNumber: '8877665544',
+        address: '77 Developer Way, Code City',
+        pincode: '600003',
+        district: 'Chennai',
+        state: 'Tamil Nadu'
     }
 ];
 
 // Seed function
 const seedUsers = async () => {
     try {
-        // Clear existing users (optional - comment out if you want to keep existing users)
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('🌱 Connected to MongoDB...');
+
+        // Clear existing data
         await User.deleteMany({});
-        console.log('Cleared existing users');
+        console.log('Emptying User collection...');
 
-        // Create new users
-        for (const userData of users) {
-            const user = await User.create(userData);
-            console.log(`Created user: ${user.email} (${user.role})`);
-        }
+        // Insert new data
+        // Using create() here to ensure model middleware (like password hashing) runs
+        await User.create(users);
 
-        console.log('\n✅ Database seeded successfully!');
-        console.log('\nTest Credentials:');
-        console.log('Admin: admin@gmail.com / admin123');
-        console.log('Customer 1: prakash@gmail.com / 12345678');
-        console.log('Customer 2: arjune@gmail.com / 87654321');
-
-        process.exit(0);
+        console.log('✅ Database seeded successfully!');
+        mongoose.connection.close(); // Graceful shutdown
     } catch (error) {
-        console.error('Error seeding database:', error);
+        console.error('❌ Error seeding database:', error);
+        mongoose.connection.close();
         process.exit(1);
     }
 };

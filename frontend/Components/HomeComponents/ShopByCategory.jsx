@@ -4,19 +4,21 @@ import Categories from './Categories'
 
 export default function ShopByCategory({ data = categoriesData, activeCategory = 'all', onSelectCategory = () => { } }) {
   // Ensure we always have an "All" category to select
-  const allCategory = { id: 'all', name: 'All' }
+  const allCategory = { _id: 'all', id: 'all', name: 'All' }
 
   const list = Array.isArray(data) && data.length > 0 ? [allCategory, ...data] : [allCategory]
 
   const renderItem = ({ item }) => {
-    const img = item.image || (Array.isArray(data) ? data.find(d => d.id === item.id)?.image : undefined)
+    // Prefer _id, fallback to id
+    const itemId = item._id || item.id;
+    const img = item.image || (Array.isArray(data) ? data.find(d => (d._id || d.id) === itemId)?.image : undefined)
     return (
       <Categories
         item={item}
         image={img}
-        isAll={item.id === 'all'}
-        isActive={activeCategory === item.id}
-        onPress={() => onSelectCategory(item.id)}
+        isAll={itemId === 'all'}
+        isActive={activeCategory === itemId}
+        onPress={() => onSelectCategory(itemId)}
       />
     )
   }
@@ -29,7 +31,7 @@ export default function ShopByCategory({ data = categoriesData, activeCategory =
         <FlatList
           data={list}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => (item._id || item.id || '').toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 16, paddingHorizontal: 4 }}

@@ -22,7 +22,11 @@ export default function CartItem({ item }) {
 
         <View style={styles.center}>
           <Text numberOfLines={2} style={styles.title}>{product.name}</Text>
-          <Text style={styles.price}>${product.price?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.price}>
+            ₹{(product.discountPrice && product.discountPrice < product.price)
+              ? product.discountPrice.toFixed(2)
+              : (product.price || 0).toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.right}>

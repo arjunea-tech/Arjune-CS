@@ -11,13 +11,39 @@ import {
 import { FireworkDecoration } from '../../Components/LoginComponents/FireworkDecoration';
 import { RegisterCard } from '../../Components/RegisterComponents/RegisterCard';
 import { THEME } from '../../Components/ui/theme';
+import { authAPI } from '../../Components/api';
 import "../../Components/RegisterComponents/RegisterCard"
 
 export default function Register() {
   const handleRegister = async (values) => {
-    // values contains: fullName, email, password, confirmPassword
-    Alert.alert('Registration Successful', `Welcome, ${values.fullName}!`);
-    router.replace('/(tabs)/Home');
+    try {
+      const formData = new FormData();
+      formData.append('name', values.fullName);
+      formData.append('email', values.email);
+      formData.append('password', values.password);
+      formData.append('mobileNumber', values.mobileNumber);
+      formData.append('address', values.address);
+      formData.append('pincode', values.pincode);
+      formData.append('district', values.district);
+      formData.append('state', values.state);
+
+      if (values.avatar) {
+        const localUri = values.avatar;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        formData.append('avatar', { uri: localUri, name: filename, type });
+      }
+
+      const res = await authAPI.register(formData);
+      if (res.success) {
+        Alert.alert('Registration Successful', `Welcome, ${values.fullName}!`);
+        router.replace('/(auth)/Login');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      Alert.alert('Error', error.response?.data?.error || 'Registration failed');
+    }
   };
 
   const handleGoogleRegister = () => {
@@ -35,20 +61,17 @@ export default function Register() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Firework Decorations matching your screenshot */}
-        <FireworkDecoration top={20} left={-20} width={150} height={150} />
-        <FireworkDecoration top={10} right={-20} width={180} height={180} />
+        {/* Firework Decorations matching Login page */}
+        <FireworkDecoration top={40} left={20} width={100} height={100} />
+        <FireworkDecoration top={60} right={30} width={120} height={120} opacity={0.8} />
+        <FireworkDecoration top={200} right={60} width={80} height={80} opacity={0.5} />
 
-        <Text style={styles.headerTitle}>Diwali Glow...</Text>
+        <Text style={styles.headerTitle}>Name</Text>
 
         <RegisterCard
           onRegister={handleRegister}
           onGoogleLogin={handleGoogleRegister}
         />
-
-        {/* Bottom Fireworks */}
-        <FireworkDecoration bottom={-20} left={-30} width={150} height={150} />
-        <FireworkDecoration bottom={-20} right={-30} width={200} height={200} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -57,19 +80,24 @@ export default function Register() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: THEME.colors.primary || '#FF3B30',
+    backgroundColor: THEME.colors.primary,
   },
   container: {
     flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 60,
+    paddingVertical: 40,
+    backgroundColor: THEME.colors.primary,
   },
   headerTitle: {
-    fontSize: 42,
-    fontFamily: Platform.OS === 'ios' ? 'Snell Roundhand' : 'serif', // Cursive style for "Diwali Glow"
+    fontSize: 36,
+    fontWeight: 'bold',
     color: '#FFF',
-    marginBottom: 20,
+    marginBottom: 30,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 2,
     textAlign: 'center',
   },
 });

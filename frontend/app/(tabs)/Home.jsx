@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { categoriesAPI, productsAPI } from '../../Components/api'
+import { categoriesAPI, productsAPI, bannersAPI } from '../../Components/api'
 import BannerCarousel from '../../Components/HomeComponents/BannerCarousel'
 import BestSellingProducts from '../../Components/HomeComponents/BestSellingProducts'
 import FilterChips from '../../Components/HomeComponents/FilterChips'
@@ -9,6 +9,7 @@ import Products from '../../Components/HomeComponents/Products'
 import ShopByCategory from '../../Components/HomeComponents/ShopByCategory'
 import categoriesData from '../../testing/CategoryTestData.json'
 import productsData from '../../testing/ProductsTestData.json'
+import bannerData from '../../testing/BannerTestData.json'
 
 export default function Home() {
   const [search, setSearch] = useState('')
@@ -16,9 +17,10 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState('default')
   const [products, setProducts] = useState(productsData)
   const [categories, setCategories] = useState(categoriesData)
+  const [banners, setBanners] = useState(bannerData)
   const [loading, setLoading] = useState(false)
 
-  // Fetch products and categories from backend
+  // Fetch products, categories, and banners from backend
   useEffect(() => {
     fetchData();
   }, []);
@@ -38,11 +40,18 @@ export default function Home() {
       if (categoriesResponse.success) {
         setCategories(categoriesResponse.data);
       }
+
+      // Fetch banners
+      const bannersResponse = await bannersAPI.getBanners();
+      if (bannersResponse.success) {
+        setBanners(bannersResponse.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       // Fallback to mock data if API fails
       setProducts(productsData);
       setCategories(categoriesData);
+      setBanners(bannerData);
     } finally {
       setLoading(false);
     }
@@ -65,24 +74,27 @@ export default function Home() {
     if (qRaw.length > 0) {
       for (const c of categories) {
         if (qRaw.includes((c.name || '').toLowerCase())) {
-          parsedCategory = c.id
+          parsedCategory = c._id || c.id
           break
         }
       }
     }
 
     // If search included a category name, filter by it; else use selected category
-    if (parsedCategory) {
-      list = list.filter((p) => String(p.category) === String(parsedCategory))
-    } else if (activeCategory && activeCategory !== 'all') {
-      list = list.filter((p) => String(p.category) === String(activeCategory))
+    const targetCategory = parsedCategory || (activeCategory !== 'all' ? activeCategory : null);
+
+    if (targetCategory) {
+      list = list.filter((p) => {
+        const pCatId = typeof p.category === 'object' && p.category ? (p.category._id || p.category.id) : p.category;
+        return String(pCatId) === String(targetCategory);
+      });
     }
 
     // Remove parsed tokens from textual search
     let q = qRaw
     if (priceMatch) q = q.replace(priceMatch[0], '').trim()
     if (parsedCategory) {
-      const catName = (categoriesData.find((c) => c.id === parsedCategory)?.name || '').toLowerCase()
+      const catName = (categories.find((c) => (c._id || c.id) === parsedCategory)?.name || '').toLowerCase()
       if (catName) q = q.replace(new RegExp(catName, 'i'), '').trim()
     }
 
@@ -106,7 +118,7 @@ export default function Home() {
     }
 
     return list
-  }, [search, activeCategory, activeFilter, products])
+  }, [search, activeCategory, activeFilter, products, categories])
 
   // Best selling filtered by category and search
   const bestSelling = useMemo(() => filteredProducts.filter((p) => p.bestSelling), [filteredProducts])
@@ -118,7 +130,7 @@ export default function Home() {
     if (qRaw.length > 0) {
       for (const c of categories) {
         if (qRaw.includes((c.name || '').toLowerCase())) {
-          parsedCategory = c.id
+          parsedCategory = c._id || c.id
           break
         }
       }
@@ -142,7 +154,7 @@ export default function Home() {
           <Products data={filteredProducts} onClear={() => setSearch('')} />
         ) : (
           <>
-            <BannerCarousel />
+            <BannerCarousel data={banners} />
             <ShopByCategory data={categories} activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
             <BestSellingProducts data={bestSelling} />
             <FilterChips active={activeFilter} onChange={setActiveFilter} />

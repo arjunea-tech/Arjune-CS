@@ -34,7 +34,11 @@ exports.getProduct = asyncHandler(async (req, res, next) => {
 // @access  Private/Admin
 exports.createProduct = asyncHandler(async (req, res, next) => {
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     const product = await Product.create(req.body);
@@ -56,7 +60,11 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     }
 
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {

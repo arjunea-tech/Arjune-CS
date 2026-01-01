@@ -14,11 +14,9 @@ import OrderTimeline from '../../Components/OrderComponents/OrderTimeline'
 import Button from '../../Components/ui/Button'
 import Card from '../../Components/ui/Card'
 import { THEME } from '../../Components/ui/theme'
-import ordersData from '../../testing/OrdersTestData.json'
-import productsData from '../../testing/ProductsTestData.json'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from '@react-navigation/native'
 import { useCallback, useState } from 'react'
+import api from '../../Components/api/config'
 
 export default function Orders() {
   const router = useRouter()
@@ -26,23 +24,43 @@ export default function Orders() {
   const [orders, setOrders] = useState([])
 
   const handleReorder = (order) => {
-    order.items.forEach(it => {
-      const p = productsData.find(
-        p => String(p.id) === String(it.productId)
-      )
-      if (p) addItem(p, it.quantity)
-    })
-    Alert.alert('Added to cart', 'Order items have been added to your cart.')
-    router.push('/(tabs)/Cart')
+    // Reorder logic needs to be adapted for API products being full objects
+    // Assuming order.orderItems has full product details or we need to fetch them
+    // For now, simple alert or skipping complex re-add logic
+    Alert.alert('Reorder', 'Feature coming soon linked to live inventory.')
+    // Logic: fetch product by ID -> addItem
   }
 
   const loadOrders = async () => {
     try {
-      const raw = await AsyncStorage.getItem('orders')
-      setOrders(raw ? JSON.parse(raw) : ordersData)
-    } catch {
-      setOrders(ordersData)
+      const response = await api.get('/orders/myorders');
+      if (response.data.success) {
+        setOrders(response.data.data.map(mapOrderToUI));
+      }
+    } catch (error) {
+      console.error('Failed to load orders', error);
+      Alert.alert('Error', 'Could not load your orders.');
     }
+  }
+
+  // Helper to map backend order to UI format
+  const mapOrderToUI = (backendOrder) => {
+    const status = backendOrder.orderStatus;
+    const steps = [
+      { key: 'placed', label: 'Order placed', date: backendOrder.createdAt?.substring(0, 10), done: true },
+      { key: 'shipped', label: 'Shipped', date: '', done: ['Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
+      { key: 'out', label: 'Out for Delivery', date: '', done: ['Out for Delivery', 'Delivered'].includes(status) },
+      { key: 'delivered', label: 'Delivered', date: backendOrder.deliveredAt?.substring(0, 10), done: status === 'Delivered' }
+    ];
+
+    return {
+      _id: backendOrder._id,
+      items: backendOrder.orderItems,
+      totalPrice: backendOrder.totalPrice,
+      createdAt: backendOrder.createdAt?.substring(0, 10),
+      steps,
+      status
+    };
   }
 
   useFocusEffect(
@@ -53,7 +71,7 @@ export default function Orders() {
 
   return (
     <View style={styles.container}>
-      
+
       {/* 🔒 FIXED HEADER (NOT SCROLLING) */}
       <View style={styles.headerRow}>
         <TouchableOpacity
@@ -68,56 +86,53 @@ export default function Orders() {
 
       {/* 📜 SCROLLABLE CONTENT */}
       <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-        {orders.map((o) => {
-          const subtotal = o.items.reduce((s, it) => {
-            const p = productsData.find(
-              pp => String(pp.id) === String(it.productId)
-            )
-            return s + (p?.price || 0) * it.quantity
-          }, 0)
+        {orders.map((o) => (
+          <Card key={o._id} style={styles.orderWrap}>
+            <View style={styles.headerRowInside}>
+              <Text style={styles.orderTitle}>Order #{o._id.substring(o._id.length - 6)}</Text>
+              <Text style={styles.orderDate}>{o.createdAt}</Text>
+            </View>
 
-          return (
-            <Card key={o.id} style={styles.orderWrap}>
-              <View style={styles.headerRowInside}>
-                <Text style={styles.orderTitle}>Order #{o.id}</Text>
-                <Text style={styles.orderDate}>{o.placedAt}</Text>
-              </View>
+            <OrderTimeline steps={o.steps} />
 
-              <OrderTimeline steps={o.steps} />
+            <View style={{ marginTop: THEME.spacing.md }}>
+              {o.items.map((it, idx) => (
+                <OrderItem key={idx} item={it} />
+              ))}
+            </View>
 
-              <View style={{ marginTop: THEME.spacing.md }}>
-                {o.items.map((it, idx) => (
-                  <OrderItem key={idx} item={it} />
-                ))}
-              </View>
+            <View style={styles.summaryRow}>
+              <Text style={{ fontWeight: '700' }}>Total</Text>
+              <Text style={{ fontWeight: '700' }}>
+                ${o.totalPrice.toFixed(2)}
+              </Text>
+            </View>
 
-              <View style={styles.summaryRow}>
-                <Text style={{ fontWeight: '700' }}>Subtotal</Text>
-                <Text style={{ fontWeight: '700' }}>
-                  ${subtotal.toFixed(2)}
+            <View style={styles.actionsRow}>
+              <Button
+                variant="ghost"
+                style={{ flex: 1, marginRight: 8 }}
+                onPress={() =>
+                  router.push(`/OrderDetail?id=${o._id}`)
+                }
+              >
+                <Text style={{ color: THEME.colors.primary, fontWeight: '700' }}>
+                  View Details
                 </Text>
-              </View>
+              </Button>
 
-              <View style={styles.actionsRow}>
-                <Button
-                  variant="ghost"
-                  style={{ flex: 1, marginRight: 8 }}
-                  onPress={() =>
-                    router.push(`/OrderDetail?id=${o.id}`)
-                  }
-                >
-                  <Text style={{ color: THEME.colors.primary, fontWeight: '700' }}>
-                    View Details
-                  </Text>
-                </Button>
-
-                <Button style={{ flex: 1 }} onPress={() => handleReorder(o)}>
-                  Reorder
-                </Button>
-              </View>
-            </Card>
-          )
-        })}
+              <Button style={{ flex: 1 }} onPress={() => handleReorder(o)}>
+                Reorder
+              </Button>
+            </View>
+          </Card>
+        )
+        )}
+        {orders.length === 0 && (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#fff' }}>No orders found.</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   )

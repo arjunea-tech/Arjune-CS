@@ -1,32 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
+import api from '../../Components/api/config';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ChitDetails() {
     const router = useRouter();
+    const { id } = useLocalSearchParams();
 
-    // Mock Scheme Data
-    const scheme = {
-        name: 'Diwali Gold Plan 2024',
-        total: '₹12,000',
-        monthly: '₹1,000',
-        membersCount: 45,
-        months_total: 12,
-        current_month: 8
-    };
-
-    // Mock Members with Payment Status
-    const [members, setMembers] = useState([
-        { id: '1', name: 'Aarav Patel', phone: '9876543210', paidMonths: 8, pending: 0, status: 'Up to Date' },
-        { id: '2', name: 'Priya Sharma', phone: '9876512345', paidMonths: 6, pending: 2, status: 'Overdue' },
-        { id: '3', name: 'Rohan Gupta', phone: '9123456789', paidMonths: 8, pending: 0, status: 'Up to Date' },
-        { id: '4', name: 'Ananya Singh', phone: '9988776655', paidMonths: 7, pending: 1, status: 'Late' },
-        { id: '5', name: 'Vikram M', phone: '9112233445', paidMonths: 8, pending: 0, status: 'Up to Date' },
-    ]);
+    const [scheme, setScheme] = useState(null);
+    const [members, setMembers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMember, setSelectedMember] = useState(null);
+
+    const fetchDetails = async () => {
+        try {
+            setLoading(true);
+            const schemeRes = await api.get(`/chit/schemes/${id}`);
+            if (schemeRes.data.success) {
+                setScheme(schemeRes.data.data);
+            }
+
+            // Fetch participants
+            const participantsRes = await api.get(`/chit/schemes/${id}/participants`);
+            if (participantsRes.data.success) {
+                setMembers(participantsRes.data.data);
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Error', 'Failed to load details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            if (id) fetchDetails();
+        }, [id])
+    );
 
     const handleMarkPayment = (member) => {
         setSelectedMember(member);
@@ -34,9 +49,10 @@ export default function ChitDetails() {
     };
 
     const confirmPayment = (month) => {
-        alert(`Payment for Month ${month} recorded for ${selectedMember.name}!`);
+        // Mock payment implementation for Admin to record offline payment? 
+        // Or call an API? For now, alert mock.
+        Alert.alert('Simulated', `Payment for Month ${month} recorded for ${selectedMember.name}!`);
         setModalVisible(false);
-        // Here you would typically update the state/backend
     };
 
     const renderMemberCard = ({ item }) => (
@@ -44,7 +60,7 @@ export default function ChitDetails() {
             <View className="flex-row justify-between items-start mb-2">
                 <View>
                     <Text className="font-bold text-gray-800 text-base">{item.name}</Text>
-                    <Text className="text-gray-400 text-xs">{item.phone}</Text>
+                    <Text className="text-gray-400 text-xs">{item.email}</Text>
                 </View>
                 <View className={`px-2 py-1 rounded ${item.pending > 0 ? 'bg-red-100' : 'bg-green-100'}`}>
                     <Text className={`text-[10px] font-bold ${item.pending > 0 ? 'text-red-700' : 'text-green-700'}`}>
@@ -57,12 +73,12 @@ export default function ChitDetails() {
             <View className="mt-2">
                 <View className="flex-row justify-between mb-1">
                     <Text className="text-xs text-gray-500">Progress</Text>
-                    <Text className="text-xs font-bold text-gray-800">{item.paidMonths} / {scheme.months_total} Months</Text>
+                    <Text className="text-xs font-bold text-gray-800">{item.paidMonths} / {scheme?.durationMonths} Months</Text>
                 </View>
                 <View className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                     <View
                         className="h-full bg-orange-500 rounded-full"
-                        style={{ width: `${(item.paidMonths / scheme.months_total) * 100}%` }}
+                        style={{ width: `${(item.paidMonths / scheme?.durationMonths) * 100}%` }}
                     />
                 </View>
             </View>
@@ -77,6 +93,22 @@ export default function ChitDetails() {
         </View>
     );
 
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color="orange" />
+            </View>
+        );
+    }
+
+    if (!scheme) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <Text>Scheme not found</Text>
+            </View>
+        );
+    }
+
     return (
         <View className="flex-1 bg-gray-50">
             {/* Header */}
@@ -88,38 +120,24 @@ export default function ChitDetails() {
                     <Text className="text-xl font-bold text-white flex-1" numberOfLines={1}>
                         {scheme.name}
                     </Text>
-                    <TouchableOpacity>
-                        <Ionicons name="settings-outline" size={24} color="white" />
-                    </TouchableOpacity>
                 </View>
 
                 {/* Stats */}
                 <View className="flex-row justify-between bg-white/10 rounded-xl p-4 backdrop-blur-md">
                     <View className="items-center">
                         <Text className="text-orange-100 text-xs uppercase font-bold">Total</Text>
-                        <Text className="text-white text-lg font-bold">{scheme.total}</Text>
+                        <Text className="text-white text-lg font-bold">₹{scheme.totalAmount}</Text>
                     </View>
                     <View className="w-[1px] bg-white/20 h-full" />
                     <View className="items-center">
                         <Text className="text-orange-100 text-xs uppercase font-bold">Monthly</Text>
-                        <Text className="text-white text-lg font-bold">{scheme.monthly}</Text>
+                        <Text className="text-white text-lg font-bold">₹{scheme.installmentAmount}</Text>
                     </View>
                     <View className="w-[1px] bg-white/20 h-full" />
                     <View className="items-center">
                         <Text className="text-orange-100 text-xs uppercase font-bold">Users</Text>
-                        <Text className="text-white text-lg font-bold">{scheme.membersCount}</Text>
+                        <Text className="text-white text-lg font-bold">{members.length}</Text>
                     </View>
-                </View>
-            </View>
-
-            {/* Search */}
-            <View className="px-4 py-3 bg-white shadow-sm mb-1">
-                <View className="flex-row items-center rounded-xl bg-gray-50 px-3 py-2 border border-gray-200">
-                    <Ionicons name="search" size={18} color="#9CA3AF" />
-                    <TextInput
-                        placeholder="Search member..."
-                        className="ml-2 flex-1 text-gray-800"
-                    />
                 </View>
             </View>
 
@@ -130,6 +148,11 @@ export default function ChitDetails() {
                 renderItem={renderMemberCard}
                 contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={() => (
+                    <View className="items-center mt-10">
+                        <Text className="text-gray-400">No participants yet</Text>
+                    </View>
+                )}
             />
 
             {/* Payment Modal */}
@@ -153,13 +176,14 @@ export default function ChitDetails() {
                         </Text>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                            {Array.from({ length: scheme.durationMonths }, (_, i) => i + 1).map((month) => (
                                 <TouchableOpacity
                                     key={month}
                                     onPress={() => confirmPayment(month)}
                                     className="flex-row items-center justify-between p-4 mb-2 bg-gray-50 rounded-xl border border-gray-100"
                                 >
                                     <Text className="font-bold text-gray-700">Month {month}</Text>
+                                    {/* Mock logic for paid check */}
                                     {month <= (selectedMember?.paidMonths || 0) ? (
                                         <Text className="text-green-600 font-bold text-xs">PAID</Text>
                                     ) : (

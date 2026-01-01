@@ -1,17 +1,19 @@
 import { Image } from 'expo-image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
     FlatList,
     ScrollView,
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    ActivityIndicator
 } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
-import ProductsTestData from '../../testing/ProductsTestData.json';
+import { productsAPI } from '../../Components/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Inventory() {
     const router = useRouter();
@@ -19,20 +21,36 @@ export default function Inventory() {
     const [activeFilter, setActiveFilter] = useState('All Items');
     const [search, setSearch] = useState('');
     const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const filters = ['All Items', 'Diwali Specials 🔥', 'Low Stock', 'Out of Stock'];
 
-    // ✅ Load JSON correctly
-    useEffect(() => {
-        setProducts(ProductsTestData);
-    }, []);
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const res = await productsAPI.getProducts();
+            if (res.success) {
+                setProducts(res.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch products', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // ✅ Filter + Search logic
+    useFocusEffect(
+        useCallback(() => {
+            fetchProducts();
+        }, [])
+    );
+
+    // Filter + Search logic
     const filteredProducts = useMemo(() => {
         return products.filter(item => {
             // Search
             const matchesSearch =
-                item.name.toLowerCase().includes(search.toLowerCase()) ||
+                (item.name || '').toLowerCase().includes(search.toLowerCase()) ||
                 (item.sku && item.sku.toLowerCase().includes(search.toLowerCase()));
 
             // Filters
@@ -41,11 +59,12 @@ export default function Inventory() {
             }
 
             if (activeFilter === 'Low Stock') {
-                return item.isLowStock && matchesSearch;
+                // Assuming low stock threshold is 10 or check logic
+                return (item.stock < 10 && item.stock > 0) && matchesSearch;
             }
 
             if (activeFilter === 'Out of Stock') {
-                return item.isOutOfStock && matchesSearch;
+                return item.stock === 0 && matchesSearch;
             }
 
             return matchesSearch;
@@ -54,13 +73,15 @@ export default function Inventory() {
 
     const renderShowing = ({ item }) => {
         if (!item) return null;
+        const isOutOfStock = item.stock === 0;
+
         return (
             <View className="mb-4 flex-row items-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
                 {/* Image */}
                 <View className="relative h-20 w-20">
                     <Image
                         source={{ uri: item.image }}
-                        className={`h-full w-full rounded-xl ${item.isOutOfStock ? 'opacity-50' : ''}`}
+                        className={`h-full w-full rounded-xl ${isOutOfStock ? 'opacity-50' : ''}`}
                         contentFit="cover"
                         transition={200}
                     />
@@ -71,7 +92,7 @@ export default function Inventory() {
                         </View>
                     )}
 
-                    {item.isOutOfStock && (
+                    {isOutOfStock && (
                         <View className="absolute inset-0 items-center justify-center rounded-xl bg-black/40">
                             <Text className="text-[10px] font-bold text-white">Out of Stock</Text>
                         </View>
@@ -94,15 +115,15 @@ export default function Inventory() {
                             ₹{item.price}
                         </Text>
 
-                        {!item.isOutOfStock && (
-                            <View className={`rounded px-2 py-0.5 ${item.statusColor}`}>
-                                <Text className="text-[10px] font-bold">{item.status}</Text>
+                        {!isOutOfStock && (
+                            <View className="rounded px-2 py-0.5 bg-green-100">
+                                <Text className="text-[10px] font-bold text-green-700">In Stock ({item.stock})</Text>
                             </View>
                         )}
 
                         <TouchableOpacity
                             className="ml-2 bg-gray-100 p-1.5 rounded-full"
-                            onPress={() => router.push({ pathname: '/(admin)/AddNewProduct', params: { editId: item.id } })}
+                            onPress={() => router.push({ pathname: '/(admin)/AddNewProduct', params: { editId: item._id } })}
                         >
                             <Ionicons name="pencil" size={14} color="#6B7280" />
                         </TouchableOpacity>
@@ -162,13 +183,24 @@ export default function Inventory() {
             </View>
 
             {/* List */}
-            <FlatList
-                data={filteredProducts}
-                keyExtractor={item => item.id.toString()}
-                renderItem={renderShowing}
-                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-                showsVerticalScrollIndicator={false}
-            />
+            {loading ? (
+                <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator size="large" color={THEME.colors.primary} />
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredProducts}
+                    keyExtractor={item => item._id}
+                    renderItem={renderShowing}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={() => (
+                        <View className="items-center mt-10">
+                            <Text className="text-gray-400">No products found</Text>
+                        </View>
+                    )}
+                />
+            )}
 
             {/* FAB */}
             <TouchableOpacity

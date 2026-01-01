@@ -18,7 +18,11 @@ exports.getBanners = asyncHandler(async (req, res, next) => {
 // @access  Private/Admin
 exports.createBanner = asyncHandler(async (req, res, next) => {
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     const banner = await Banner.create(req.body);
@@ -40,7 +44,11 @@ exports.updateBanner = asyncHandler(async (req, res, next) => {
     }
 
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     banner = await Banner.findByIdAndUpdate(req.params.id, req.body, {

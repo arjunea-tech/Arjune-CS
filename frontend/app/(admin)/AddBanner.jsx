@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import { bannersAPI } from '../../Components/api';
 
 export default function AddBanner() {
     const router = useRouter();
@@ -12,6 +13,7 @@ export default function AddBanner() {
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [link, setLink] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -26,14 +28,47 @@ export default function AddBanner() {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!image || !title) {
-            alert('Please select an image and enter a title');
+            Alert.alert('Validation Error', 'Please select an image and enter a title');
             return;
         }
-        alert('Banner Added Successfully!');
-        router.back();
+
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('subtitle', subtitle);
+            formData.append('link', link);
+            formData.append('status', 'Active');
+
+            if (!image.startsWith('http')) {
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image`;
+                formData.append('image', { uri: image, name: filename, type });
+            }
+
+            const res = await bannersAPI.createBanner(formData);
+            if (res.success) {
+                Alert.alert('Success', 'Banner Added Successfully!');
+                router.back();
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to add banner. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color={THEME.colors.primary} />
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1 bg-white">
@@ -51,10 +86,10 @@ export default function AddBanner() {
                 {/* Image Picker */}
                 <TouchableOpacity
                     onPress={pickImage}
-                    className="mb-6 h-48 w-full items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50"
+                    className="mb-6 h-48 w-full items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 overflow-hidden"
                 >
                     {image ? (
-                        <Image source={{ uri: image }} className="h-full w-full rounded-2xl" resizeMode="cover" />
+                        <Image source={{ uri: image }} className="h-full w-full" resizeMode="cover" />
                     ) : (
                         <View className="items-center justify-center">
                             <View className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">

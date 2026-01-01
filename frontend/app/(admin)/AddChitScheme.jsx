@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import api from '../../Components/api/config';
 
 export default function AddChitScheme() {
     const router = useRouter();
@@ -11,8 +12,34 @@ export default function AddChitScheme() {
     const [totalAmount, setTotalAmount] = useState('');
     const [months, setMonths] = useState('');
     const [installment, setInstallment] = useState('');
-    const [bonus, setBonus] = useState('');
+    const [bonus, setBonus] = useState(''); // Not used in backend yet
     const [description, setDescription] = useState('');
+
+    const handleCreate = async () => {
+        if (!name || !totalAmount || !months || !installment) {
+            Alert.alert('Error', 'Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const payload = {
+                name,
+                totalAmount: Number(totalAmount),
+                installmentAmount: Number(installment),
+                durationMonths: Number(months),
+                description
+            };
+
+            const res = await api.post('/chit/schemes', payload);
+            if (res.data.success) {
+                Alert.alert('Success', 'Chit Scheme Created Successfully!');
+                router.back();
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create scheme');
+        }
+    };
 
     return (
         <View className="flex-1 bg-white">
@@ -102,14 +129,7 @@ export default function AddChitScheme() {
 
                 {/* Save Button */}
                 <TouchableOpacity
-                    onPress={() => {
-                        if (!name || !totalAmount || !months || !installment) {
-                            alert('Please fill in all required fields');
-                            return;
-                        }
-                        alert('Chit Scheme Created Successfully!');
-                        router.back();
-                    }}
+                    onPress={handleCreate}
                     className="mb-10 flex-row items-center justify-center rounded-xl bg-orange-500 py-4 shadow-md active:bg-orange-600"
                 >
                     <Ionicons name="checkmark-circle-outline" size={24} color="white" className="mr-2" />

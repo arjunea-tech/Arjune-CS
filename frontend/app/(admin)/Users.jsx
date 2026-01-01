@@ -1,62 +1,75 @@
 import { Image } from 'expo-image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { FlatList, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import api from '../../Components/api/config';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Users() {
     const router = useRouter();
     const [search, setSearch] = useState('');
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Mock User Data
-    const users = [
-        {
-            id: '1',
-            name: 'Aarav Patel',
-            email: 'aarav.patel@example.com',
-            status: 'Active',
-            role: 'Customer',
-            avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&q=80',
-            joinDate: '12 Oct, 2023'
-        },
-        {
-            id: '2',
-            name: 'Priya Sharma',
-            email: 'priya.sharma@example.com',
-            status: 'Active',
-            role: 'Customer',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80',
-            joinDate: '05 Nov, 2023'
-        },
-        {
-            id: '3',
-            name: 'Rohan Gupta',
-            email: 'rohan.g@example.com',
-            status: 'Inactive',
-            role: 'Customer',
-            avatar: null, // No image to test initials/placeholder
-            joinDate: '20 Sep, 2023'
-        },
-        {
-            id: '4',
-            name: 'Ananya Singh',
-            email: 'ananya.singh@example.com',
-            status: 'Blocked',
-            role: 'Reseller',
-            avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=100&q=80',
-            joinDate: '01 Dec, 2023'
-        },
-        {
-            id: '5',
-            name: 'Vikram Malhotra',
-            email: 'vikram.m@example.com',
-            status: 'Active',
-            role: 'Customer',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80',
-            joinDate: '15 Jan, 2024'
-        },
-    ];
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/users');
+            if (res.data.success) {
+                const mapped = res.data.data.map(u => ({
+                    id: u._id,
+                    name: u.name,
+                    email: u.email,
+                    status: u.status || 'Active', // Default to Active if undefined
+                    role: u.role,
+                    avatar: u.avatar, // Assuming avatar URL logic
+                    joinDate: new Date(u.createdAt).toLocaleDateString()
+                }));
+                setUsers(mapped);
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to load users');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchUsers();
+        }, [])
+    );
+
+    const handleToggleStatus = (user) => {
+        const newStatus = user.status === 'Blocked' ? 'Active' : 'Blocked';
+        const action = newStatus === 'Blocked' ? 'Block' : 'Unblock';
+
+        Alert.alert(
+            `Confirm ${action}`,
+            `Are you sure you want to ${action.toLowerCase()} ${user.name}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Confirm',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const res = await api.put(`/users/${user.id}`, { status: newStatus });
+                            if (res.data.success) {
+                                Alert.alert('Success', `User ${newStatus === 'Blocked' ? 'blocked' : 'unblocked'} successfully.`);
+                                fetchUsers();
+                            }
+                        } catch (error) {
+                            Alert.alert('Error', `Failed to ${action.toLowerCase()} user.`);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const filteredUsers = users.filter(user =>
         user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -73,11 +86,13 @@ export default function Users() {
     };
 
     const renderUserItem = ({ item }) => (
-        <TouchableOpacity
-            onPress={() => router.push('/(admin)/UserDetails')}
+        <View
             className="mb-4 flex-row items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-            <View className="flex-row items-center flex-1">
+            <TouchableOpacity
+                className="flex-row items-center flex-1"
+                onPress={() => Alert.alert('User Details', `Name: ${item.name}\nEmail: ${item.email}\nJoined: ${item.joinDate}\nRole: ${item.role}`)}
+            >
                 {/* Avatar */}
                 <View className="mr-3 h-12 w-12 items-center justify-center rounded-full bg-orange-100 overflow-hidden">
                     {item.avatar ? (
@@ -97,18 +112,20 @@ export default function Users() {
                     <Text className="text-base font-bold text-gray-800" numberOfLines={1}>{item.name}</Text>
                     <Text className="text-xs text-gray-500" numberOfLines={1}>{item.email}</Text>
                 </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Status & Action */}
-            <View className="items-end">
+            <View className="items-end gap-2">
                 <View className={`mb-1 rounded px-2 py-0.5 ${getStatusColor(item.status)}`}>
                     <Text className="text-[10px] font-bold">{item.status}</Text>
                 </View>
-                <TouchableOpacity>
-                    <MaterialIcons name="more-horiz" size={20} color="#9CA3AF" />
+                <TouchableOpacity onPress={() => handleToggleStatus(item)} style={{ padding: 4 }}>
+                    <Text style={{ color: item.status === 'Blocked' ? 'green' : 'red', fontSize: 10, fontWeight: 'bold' }}>
+                        {item.status === 'Blocked' ? 'UNBLOCK' : 'BLOCK'}
+                    </Text>
                 </TouchableOpacity>
             </View>
-        </TouchableOpacity>
+        </View>
     );
 
     return (
@@ -165,7 +182,7 @@ export default function Users() {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={() => (
                     <View className="mt-10 items-center justify-center">
-                        <Text className="text-gray-400">No users found</Text>
+                        <Text className="text-gray-400">{loading ? 'Loading...' : 'No users found'}</Text>
                     </View>
                 )}
             />

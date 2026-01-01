@@ -8,16 +8,18 @@ const {
 
 const { upload } = require('../utils/storage');
 
+const { protect, authorize } = require('../middleware/auth');
+
 const router = express.Router();
 
 router
     .route('/')
     .get(getBanners)
-    .post(upload.single('image'), createBanner);
+    .post(protect, authorize('admin'), upload.single('image'), createBanner);
 
 router
     .route('/:id')
-    .put(upload.single('image'), updateBanner)
-    .delete(deleteBanner);
+    .put(protect, authorize('admin'), upload.single('image'), updateBanner)
+    .delete(protect, authorize('admin'), deleteBanner);
 
 module.exports = router;

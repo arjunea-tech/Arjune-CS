@@ -25,6 +25,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
         req.user = await User.findById(decoded.id);
 
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'User no longer exists' });
+        }
+
         next();
     } catch (err) {
         return res.status(401).json({ success: false, error: 'Not authorized to access this route' });

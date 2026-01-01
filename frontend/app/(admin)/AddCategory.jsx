@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, TextInput, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import { categoriesAPI } from '../../Components/api';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function AddCategory() {
     const router = useRouter();
@@ -12,27 +14,86 @@ export default function AddCategory() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [isActive, setIsActive] = useState(true);
+    const [image, setImage] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    // Mock category data to simulate fetching
+    // Fetch category details if in edit mode
     useEffect(() => {
         if (isEditMode) {
-            const mockCategories = [
-                { id: '1', name: 'Sparklers', description: 'Festive sparklers for all ages.', status: 'Active' },
-                { id: '2', name: 'Rockets', description: 'High-flying rockets.', status: 'Active' },
-                { id: '3', name: 'Flower Pots', description: 'Beautiful fountain displays.', status: 'Active' },
-                { id: '4', name: 'Chakkars', description: 'Spinning ground fireworks.', status: 'Active' },
-                { id: '5', name: 'Gift Boxes', description: 'Assorted firework collections.', status: 'Active' },
-                { id: '6', name: 'Garlands', description: 'Long-lasting firecracker chains.', status: 'Inactive' },
-            ];
-
-            const category = mockCategories.find(c => c.id === params.editId);
-            if (category) {
-                setName(category.name);
-                setDescription(category.description || '');
-                setIsActive(category.status === 'Active');
-            }
+            fetchCategoryDetails();
         }
     }, [isEditMode, params.editId]);
+
+    const fetchCategoryDetails = async () => {
+        try {
+            setLoading(true);
+            const res = await categoriesAPI.getCategory(params.editId);
+            if (res.success) {
+                const cat = res.data;
+                setName(cat.name);
+                setDescription(cat.description || '');
+                setIsActive(cat.status === 'Active');
+                setImage(cat.image);
+            }
+        } catch (error) {
+            Alert.alert("Error", "Failed to fetch category details");
+            router.back();
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!name) {
+            Alert.alert('Validation Error', 'Category Name is required');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('status', isActive ? 'Active' : 'Inactive');
+
+            if (image && !image.startsWith('http')) {
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image`;
+                formData.append('image', { uri: image, name: filename, type });
+            }
+
+            let res;
+            if (isEditMode) {
+                res = await categoriesAPI.updateCategory(params.editId, formData);
+            } else {
+                res = await categoriesAPI.createCategory(formData);
+            }
+
+            if (res.success) {
+                Alert.alert("Success", isEditMode ? 'Category Updated Successfully!' : 'Category Added Successfully!');
+                router.back();
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Error", "Failed to save category. Ensure name is unique.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleDelete = () => {
         Alert.alert(
@@ -43,14 +104,30 @@ export default function AddCategory() {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: () => {
-                        alert('Category Deleted Successfully!');
-                        router.back();
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await categoriesAPI.deleteCategory(params.editId);
+                            Alert.alert('Success', 'Category Deleted Successfully!');
+                            router.back();
+                        } catch (error) {
+                            Alert.alert("Error", "Failed to delete category");
+                        } finally {
+                            setLoading(false);
+                        }
                     }
                 }
             ]
         );
     };
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color={THEME.colors.primary} />
+            </View>
+        )
+    }
 
     return (
         <View className="flex-1 bg-white">
@@ -67,9 +144,22 @@ export default function AddCategory() {
                 <View className="bg-white rounded-xl p-5 mb-5 shadow-sm border border-100 space-y-4 gap-4">
 
                     {/* Image Placeholder */}
-                    <TouchableOpacity className="h-40 bg-gray-100 rounded-xl items-center justify-center border-2 border-dashed border-gray-300">
-                        <Ionicons name="image-outline" size={40} color="gray" />
-                        <Text className="text-gray-400 mt-2 font-bold">Upload Category Icon</Text>
+                    <TouchableOpacity
+                        onPress={pickImage}
+                        className="h-40 bg-gray-100 rounded-xl items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden"
+                    >
+                        {image ? (
+                            <Image
+                                source={{ uri: image }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <>
+                                <Ionicons name="image-outline" size={40} color="gray" />
+                                <Text className="text-gray-400 mt-2 font-bold">Upload Category Icon</Text>
+                            </>
+                        )}
                     </TouchableOpacity>
 
                     <View>
@@ -108,14 +198,7 @@ export default function AddCategory() {
 
                 {/* Save Button */}
                 <TouchableOpacity
-                    onPress={() => {
-                        if (!name) {
-                            alert('Category Name is required');
-                            return;
-                        }
-                        alert(isEditMode ? 'Category Updated Successfully!' : 'Category Added Successfully!');
-                        router.back();
-                    }}
+                    onPress={handleSave}
                     className="flex-row items-center justify-center rounded-xl bg-orange-500 py-4 shadow-md active:bg-orange-600"
                 >
                     <Ionicons name="checkmark-circle-outline" size={24} color="white" className="mr-2" />

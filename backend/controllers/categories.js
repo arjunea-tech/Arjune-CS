@@ -35,7 +35,11 @@ exports.getCategory = asyncHandler(async (req, res, next) => {
 exports.createCategory = asyncHandler(async (req, res, next) => {
     // Add image path if file uploaded
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     const category = await Category.create(req.body);
@@ -58,7 +62,11 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
 
     // Update image if new one uploaded
     if (req.file) {
-        req.body.image = req.file.path;
+        let image = req.file.path;
+        if (!image.startsWith('http')) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        req.body.image = image;
     }
 
     category = await Category.findByIdAndUpdate(req.params.id, req.body, {

@@ -8,13 +8,20 @@ import OrderSummary from '../Components/CartComponents/OrderSummary'
 import Button from '../Components/ui/Button'
 import Card from '../Components/ui/Card'
 import { THEME } from '../Components/ui/theme'
+import api from '../Components/api/config'
+import { useAuth } from '../Components/utils/AuthContext'
+import { Modal, FlatList } from 'react-native'
 
 export default function Checkout() {
   const router = useRouter();
+  const { user } = useAuth();
   const { totals, clearCart, cartItems } = useCart();
   const [payment, setPayment] = useState('card');
-  const [address, setAddress] = useState('XYZ......');
+
+  // Initialize address from user data
+  const [address, setAddress] = useState(user?.address || '');
   const [editingAddress, setEditingAddress] = useState(false);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
 
   const placeOrder = async () => {
     if (!cartItems || cartItems.length === 0) {
@@ -22,30 +29,38 @@ export default function Checkout() {
       return;
     }
 
-    const items = cartItems.map(i => ({ productId: String(i.product.id), quantity: i.quantity }));
-    const id = `ord_${Date.now()}`;
-    const placedAt = new Date().toISOString().slice(0, 10);
-    const steps = [
-      { key: 'placed', label: 'Order placed', date: placedAt, done: true },
-      { key: 'shipped', label: 'Shipped', date: '', done: false },
-      { key: 'out', label: 'Out for Delivery', date: '', done: false },
-      { key: 'delivered', label: 'Delivered', date: '', done: false }
-    ];
-
-    const newOrder = { id, placedAt, steps, items };
-
     try {
-      const raw = await AsyncStorage.getItem('orders');
-      const existing = raw ? JSON.parse(raw) : [];
-      const updated = [newOrder, ...existing];
-      await AsyncStorage.setItem('orders', JSON.stringify(updated));
-    } catch (e) {
-      // ignore persistence error, still proceed
-    }
+      // Map cart items to backend format
+      const orderItems = cartItems.map(i => ({
+        product: i.product.id || i.product._id, // Handle both id formats
+        name: i.product.name,
+        qty: i.quantity,
+        image: i.product.image || i.product.images?.[0], // Fallback for image
+        price: i.product.price
+      }));
 
-    clearCart();
-    Alert.alert('Order placed', 'Your order has been placed successfully');
-    router.push('/(tabs)/Orders');
+      const orderData = {
+        orderItems,
+        shippingAddress: address,
+        paymentMethod: payment,
+        itemsPrice: totals.subtotal,
+        taxPrice: 0, // Calculate tax if needed
+        shippingPrice: totals.shipping,
+        totalPrice: totals.grandTotal
+      };
+
+      const response = await api.post('/orders', orderData);
+
+      if (response.data.success) {
+        clearCart();
+        Alert.alert('Order placed', 'Your order has been placed successfully');
+        router.push('/(tabs)/Orders');
+      }
+    } catch (error) {
+      console.error('Order placement error:', error);
+      const msg = error.response?.data?.error || 'Failed to place order';
+      Alert.alert('Order Failed', msg);
+    }
   }
 
   const handleUPIPayment = async (provider) => {
@@ -81,17 +96,31 @@ export default function Checkout() {
 
         <View style={styles.body}>
           <Card style={styles.addressCard}>
-            <Text style={{ fontWeight: '700', marginBottom: 6 }}>Delivery Address</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontWeight: '700' }}>Delivery Address</Text>
+              {(user?.addresses && user.addresses.length > 0) && (
+                <TouchableOpacity onPress={() => setShowAddressPicker(true)}>
+                  <Text style={{ color: THEME.colors.primary, fontWeight: '600' }}>Select Saved Address</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {!editingAddress ? (
-              <>
-                <Text>{address}</Text>
+              <View style={{ paddingRight: 60 }}>
+                <Text style={{ fontSize: 14, color: '#333' }}>{address || 'No address set'}</Text>
                 <Button style={styles.changeBtn} onPress={() => setEditingAddress(true)}>
-                  Change
+                  Edit
                 </Button>
-              </>
+              </View>
             ) : (
               <View>
-                <TextInput value={address} onChangeText={setAddress} style={{ backgroundColor: '#fff', padding: 8, borderRadius: 6 }} />
+                <TextInput
+                  value={address}
+                  onChangeText={setAddress}
+                  style={styles.addressInput}
+                  multiline
+                  placeholder="Enter detailed delivery address"
+                />
                 <View style={{ flexDirection: 'row', marginTop: 8 }}>
                   <Button variant="ghost" style={{ flex: 1, marginRight: 8 }} onPress={() => { setEditingAddress(false); }}>
                     Cancel
@@ -156,6 +185,41 @@ export default function Checkout() {
           <OrderSummary totals={totals} buttonLabel="Place Order" onProceed={placeOrder} />
         </View>
       </ScrollView>
+
+      {/* Address Picker Modal */}
+      <Modal visible={showAddressPicker} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Delivery Address</Text>
+              <TouchableOpacity onPress={() => setShowAddressPicker(false)}>
+                <Ionicons name="close" size={24} color="#222" />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={user?.addresses || []}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.savedAddressItem}
+                  onPress={() => {
+                    setAddress(`${item.address}, ${item.district}, ${item.state} - ${item.pincode}`);
+                    setShowAddressPicker(false);
+                    setEditingAddress(false);
+                  }}
+                >
+                  <View style={styles.labelBadge}>
+                    <Text style={styles.labelText}>{item.label}</Text>
+                  </View>
+                  <Text style={styles.savedAddressText}>{item.address}</Text>
+                  <Text style={styles.savedLocationText}>{item.district}, {item.state} - {item.pincode}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -173,9 +237,30 @@ const styles = StyleSheet.create({
     paddingBottom: 10 // important for scroll
   },
   addressCard: { position: 'relative' },
-  changeBtn: { position: 'absolute', right: 16, top: 12 },
-  sectionTitle: { color: '#fff', fontSize: THEME.fonts.title, fontWeight: '700', marginBottom: THEME.spacing.sm, marginTop: THEME.spacing.md },
-  payOption: { backgroundColor: THEME.colors.surface, padding: THEME.spacing.md, borderRadius: THEME.radii.md, marginBottom: THEME.spacing.sm },
-  payOptionActive: { ...THEME.shadows.medium },
+  changeBtn: { position: 'absolute', right: 0, top: 0, marginTop: -4 },
+  addressInput: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    height: 80,
+    textAlignVertical: 'top'
+  },
+  sectionTitle: { color: THEME.colors.text, fontSize: THEME.fonts.subtitle, fontWeight: '700', marginBottom: THEME.spacing.sm, marginTop: THEME.spacing.md },
+  payOption: { backgroundColor: THEME.colors.surface, padding: THEME.spacing.md, borderRadius: THEME.radii.md, marginBottom: THEME.spacing.sm, borderWidth: 1, borderColor: THEME.colors.border },
+
+  // Modal Styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '70%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#222' },
+  savedAddressItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  labelBadge: { backgroundColor: '#fff0e0', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginBottom: 4 },
+  labelText: { color: '#ff7f00', fontSize: 11, fontWeight: '700' },
+  savedAddressText: { fontSize: 14, color: '#333' },
+  savedLocationText: { fontSize: 12, color: '#777', marginTop: 2 },
+
+  payOptionActive: { borderColor: THEME.colors.primary, backgroundColor: '#fff8f0' },
   payRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }
 });

@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { FlatList, ScrollView, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
+import api from '../../Components/api/config';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Orders() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const [activeTab, setActiveTab] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [orders, setOrders] = useState([]);
 
     useEffect(() => {
         if (params.search) {
@@ -16,64 +19,69 @@ export default function Orders() {
         }
     }, [params.search]);
 
+    const loadOrders = async () => {
+        try {
+            const response = await api.get('/orders');
+            if (response.data.success) {
+                const mapped = response.data.data.map(o => ({
+                    id: o._id,
+                    customer: o.user?.name || 'Guest',
+                    amount: `₹${o.totalPrice}`,
+                    status: o.orderStatus,
+                    date: new Date(o.createdAt).toLocaleDateString(),
+                    items: o.orderItems.map(i => i.name).join(', ')
+                }));
+                setOrders(mapped);
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to load orders');
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            loadOrders();
+        }, [])
+    );
+
+    const handleUpdateStatus = async (id, currentStatus) => {
+        const nextStatus = currentStatus === 'Processing' ? 'Shipped' :
+            currentStatus === 'Shipped' ? 'Out for Delivery' :
+                currentStatus === 'Out for Delivery' ? 'Delivered' : 'Delivered';
+
+        if (nextStatus === currentStatus) return; // Already delivered
+
+        try {
+            const res = await api.put(`/orders/${id}/status`, { status: nextStatus });
+            if (res.data.success) {
+                Alert.alert('Success', `Order updated to ${nextStatus}`);
+                loadOrders(); // Refresh
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update status');
+        }
+    };
+
     const tabs = ['All', 'Pending', 'Shipped', 'Delivered'];
 
-    // Mock Order Data
-    const orders = [
-        {
-            id: 'ORD-1001',
-            customer: 'Aarav Patel',
-            amount: '₹4,499',
-            status: 'Pending',
-            date: '12 Oct, 10:30 AM',
-            items: 'Premium Diya Set x2, Laptop Sleeve'
-        },
-        {
-            id: 'ORD-1002',
-            customer: 'Priya Sharma',
-            amount: '₹1,299',
-            status: 'Shipped',
-            date: '11 Oct, 04:15 PM',
-            items: 'Brass Puja Thali'
-        },
-        {
-            id: 'ORD-1003',
-            customer: 'Rohan Gupta',
-            amount: '₹899',
-            status: 'Delivered',
-            date: '10 Oct, 09:00 AM',
-            items: 'Luxury Gift Box'
-        },
-        {
-            id: 'ORD-1004',
-            customer: 'Ananya Singh',
-            amount: '₹2,500',
-            status: 'Pending',
-            date: '12 Oct, 11:45 AM',
-            items: 'Laxmi Ganesh Idol'
-        },
-        {
-            id: 'ORD-1005',
-            customer: 'Vikram M',
-            amount: '₹450',
-            status: 'Delivered',
-            date: '09 Oct, 02:20 PM',
-            items: 'Marigold Garland x2'
-        },
-    ];
-
     const filteredOrders = orders.filter(order => {
-        const matchesTab = activeTab === 'All' || order.status === activeTab;
+        // Pending map to Processing
+        const statusMatch = activeTab === 'All' ||
+            order.status === activeTab ||
+            (activeTab === 'Pending' && order.status === 'Processing');
+
         const matchesSearch =
             order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.customer.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesTab && matchesSearch;
+        return statusMatch && matchesSearch;
     });
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Pending': return 'bg-orange-100 text-orange-700';
+            case 'Processing': return 'bg-orange-100 text-orange-700';
             case 'Shipped': return 'bg-blue-100 text-blue-700';
+            case 'Out for Delivery': return 'bg-purple-100 text-purple-700';
             case 'Delivered': return 'bg-green-100 text-green-700';
             default: return 'bg-gray-100 text-gray-700';
         }
@@ -83,7 +91,7 @@ export default function Orders() {
         <View className="mb-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <View className="flex-row items-center justify-between">
                 <View>
-                    <Text className="text-base font-bold text-gray-800">{item.id}</Text>
+                    <Text className="text-base font-bold text-gray-800">#{item.id.substring(item.id.length - 6)}</Text>
                     <Text className="text-xs text-gray-500">{item.date}</Text>
                 </View>
                 <View className={`rounded px-2 py-1 ${getStatusColor(item.status)}`}>
@@ -106,12 +114,15 @@ export default function Orders() {
             <View className="mt-3 flex-row justify-end space-x-2 gap-2">
                 <TouchableOpacity
                     className="rounded-lg border border-gray-200 px-3 py-1.5"
-                    onPress={() => router.push('OrderDetails')}
+                    onPress={() => router.push({ pathname: '/(admin)/OrderDetails', params: { id: item.id } })}
                 >
                     <Text className="text-xs font-semibold text-gray-600">Details</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="rounded-lg bg-orange-500 px-3 py-1.5">
-                    <Text className="text-xs font-semibold text-white">Update Status</Text>
+                <TouchableOpacity
+                    className="rounded-lg bg-orange-500 px-3 py-1.5"
+                    onPress={() => handleUpdateStatus(item.id, item.status)}
+                >
+                    <Text className="text-xs font-semibold text-white">Next Status</Text>
                 </TouchableOpacity>
             </View>
         </View>

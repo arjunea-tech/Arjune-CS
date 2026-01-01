@@ -9,17 +9,19 @@ const {
 
 const { upload } = require('../utils/storage');
 
+const { protect, authorize } = require('../middleware/auth');
+
 const router = express.Router();
 
 router
     .route('/')
     .get(getProducts)
-    .post(upload.single('image'), createProduct);
+    .post(protect, authorize('admin'), upload.single('image'), createProduct);
 
 router
     .route('/:id')
     .get(getProduct)
-    .put(upload.single('image'), updateProduct)
-    .delete(deleteProduct);
+    .put(protect, authorize('admin'), upload.single('image'), updateProduct)
+    .delete(protect, authorize('admin'), deleteProduct);
 
 module.exports = router;

@@ -38,7 +38,11 @@ export default function Login() {
         }
       }
     } catch (error) {
-      Alert.alert('Login Failed', error || 'Invalid email or password.');
+      console.log('Login error:', error);
+      const errorMessage = typeof error === 'object'
+        ? (error.message || JSON.stringify(error))
+        : error;
+      Alert.alert('Login Failed', errorMessage || 'Invalid email or password.');
     }
   };
 

@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { THEME } from '../../Components/ui/theme';
-import ProductsTestData from '../../testing/ProductsTestData.json';
+import { productsAPI, categoriesAPI } from '../../Components/api';
 
 export default function AddNewProduct() {
     const params = useLocalSearchParams();
@@ -22,32 +22,60 @@ export default function AddNewProduct() {
     const [isFeatured, setIsFeatured] = useState(false);
     const [isDiwaliSpecial, setIsDiwaliSpecial] = useState(false);
 
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
+        fetchCategories();
         if (isEditMode) {
-            // Find product from test data
-            const product = ProductsTestData.find(p => String(p.id) === String(params.editId));
-            if (product) {
-                setName(product.name);
-                setPrice(String(product.price));
-                setImage(product.image);
-                setStock(String(product.quantity || '0'));
-                setDescription(product.description || '');
-                setIsDiwaliSpecial(product.isDiwaliSpecial || false);
-                setCategory(product.category); // Assuming category matches value
-            }
+            fetchProductDetails();
         }
     }, [isEditMode, params.editId]);
 
-    // Categories data
-    const data = [
-        { label: 'Sweets', value: 'sweets' },
-        { label: 'Crackers', value: 'crackers' },
-        { label: 'Gift Boxes', value: 'gift_boxes' },
-        { label: 'Diwali Specials', value: 'Diwali Specials' },
-    ];
+    const fetchCategories = async () => {
+        try {
+            const res = await categoriesAPI.getCategories();
+            if (res.success) {
+                const formatted = res.data.map(cat => ({
+                    label: cat.name,
+                    value: cat._id // Use _id as value
+                }));
+                setCategories(formatted);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const fetchProductDetails = async () => {
+        try {
+            setLoading(true);
+            const res = await productsAPI.getProduct(params.editId);
+            if (res.success) {
+                const p = res.data;
+                setName(p.name);
+                setPrice(String(p.price));
+                setDiscountPrice(p.discountPrice ? String(p.discountPrice) : '');
+                setImage(p.image);
+                setStock(String(p.quantity || '0'));
+                setDescription(p.description || '');
+                setIsFeatured(p.isFeatured || false);
+                setIsDiwaliSpecial(p.isDiwaliSpecial || false);
+
+                // Assuming p.category is populated object or just ID
+                // Handle both cases if possible, usually better to request non-populated or handle check
+                const catId = typeof p.category === 'object' ? p.category._id : p.category;
+                setCategory(catId);
+            }
+        } catch (error) {
+            Alert.alert("Error", "Failed to load product details");
+            router.back();
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -59,6 +87,59 @@ export default function AddNewProduct() {
             setImage(result.assets[0].uri);
         }
     };
+
+    const handleSave = async () => {
+        if (!name || !price || !category || !stock || !description) {
+            Alert.alert("Validation Error", "Please fill all required fields.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('price', price);
+            formData.append('discountPrice', discountPrice);
+            formData.append('quantity', stock);
+            formData.append('description', description);
+            formData.append('category', category); // category ID
+            formData.append('isFeatured', isFeatured);
+            formData.append('isDiwaliSpecial', isDiwaliSpecial);
+
+            if (image && !image.startsWith('http')) {
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image`;
+                formData.append('image', { uri: image, name: filename, type });
+            }
+
+            let res;
+            if (isEditMode) {
+                res = await productsAPI.updateProduct(params.editId, formData);
+            } else {
+                res = await productsAPI.createProduct(formData);
+            }
+
+            if (res.success) {
+                Alert.alert("Success", isEditMode ? 'Product Updated Successfully!' : 'Product Added Successfully!');
+                router.back();
+            }
+
+        } catch (error) {
+            const msg = error.response?.data?.error || error.message || "Failed to save product";
+            Alert.alert("Error", msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color={THEME.colors.primary} />
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1">
@@ -74,10 +155,10 @@ export default function AddNewProduct() {
                 {/* Image Upload Section */}
                 <TouchableOpacity
                     onPress={pickImage}
-                    className="mb-6 h-48 w-full items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50"
+                    className="mb-6 h-48 w-full items-center justify-center rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 overflow-hidden"
                 >
                     {image ? (
-                        <Image source={{ uri: image }} className="h-full w-full rounded-2xl" resizeMode="cover" />
+                        <Image source={{ uri: image }} className="h-full w-full" resizeMode="cover" />
                     ) : (
                         <View className="items-center justify-center">
                             <View className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
@@ -115,7 +196,7 @@ export default function AddNewProduct() {
                             }}
                             placeholderStyle={{ fontSize: 14, color: '#9CA3AF' }}
                             selectedTextStyle={{ fontSize: 14, color: '#1F2937' }}
-                            data={data}
+                            data={categories}
                             maxHeight={300}
                             labelField="label"
                             valueField="value"
@@ -217,10 +298,7 @@ export default function AddNewProduct() {
 
                 {/* Save Button */}
                 <TouchableOpacity
-                    onPress={() => {
-                        alert(isEditMode ? 'Product Updated Successfully!' : 'Product Added Successfully!');
-                        router.back();
-                    }}
+                    onPress={handleSave}
                     className="mt-8 mb-10 flex-row items-center justify-center rounded-xl bg-orange-500 py-4 shadow-md active:bg-orange-600"
                 >
                     <Ionicons name="save-outline" size={20} color="white" className="mr-2" />
