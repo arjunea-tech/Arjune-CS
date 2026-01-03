@@ -11,7 +11,7 @@ export function CartProvider({ children }) {
 
   const [cartItems, setCartItems] = useState(initial);
 
-  const addItem = (product, qty = 1) => {
+  const addItem = React.useCallback((product, qty = 1) => {
     setCartItems(prev => {
       const pId = product._id || product.id;
       const found = prev.find(i => String(i.product._id || i.product.id) === String(pId));
@@ -20,17 +20,17 @@ export function CartProvider({ children }) {
       }
       return [...prev, { product, quantity: qty }];
     });
-  };
+  }, []);
 
-  const removeItem = (productId) => {
+  const removeItem = React.useCallback((productId) => {
     setCartItems(prev => prev.filter(i => String(i.product._id || i.product.id) !== String(productId)));
-  };
+  }, []);
 
-  const setQuantity = (productId, quantity) => {
+  const setQuantity = React.useCallback((productId, quantity) => {
     setCartItems(prev => prev.map(i => String(i.product._id || i.product.id) === String(productId) ? { ...i, quantity: Math.max(0, quantity) } : i));
-  };
+  }, []);
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = React.useCallback(() => setCartItems([]), []);
 
   const totals = useMemo(() => {
     const subtotal = cartItems.reduce((s, it) => {
@@ -40,18 +40,23 @@ export function CartProvider({ children }) {
       return s + price * it.quantity;
     }, 0);
 
-    // simple discount: 10% if subtotal >= 200 (Optional: Remove this if product discounts are enough, but keeping as extra)
-    // Actually, user said "if discount price have, discount price is the product price".
-    // They didn't mention extra cart-wide discounts, but let's keep the existing logic or simpler?
-    // Let's keep the extra discount logic for now unless it conflicts.
-    const discount = 0; // Removing cart-wide discount to rely on product discounts as per request implicit logic
-    const shipping = subtotal > 0 ? (subtotal >= 100 ? 0 : 20) : 0; // free over 100
+    const discount = 0;
+    const shipping = subtotal > 0 ? (subtotal >= 100 ? 0 : 20) : 0;
     const grandTotal = Math.round(subtotal - discount + shipping);
     return { subtotal, discount, shipping, grandTotal };
   }, [cartItems]);
 
+  const value = useMemo(() => ({
+    cartItems,
+    addItem,
+    removeItem,
+    setQuantity,
+    clearCart,
+    totals
+  }), [cartItems, addItem, removeItem, setQuantity, clearCart, totals]);
+
   return (
-    <CartContext.Provider value={{ cartItems, addItem, removeItem, setQuantity, clearCart, totals }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

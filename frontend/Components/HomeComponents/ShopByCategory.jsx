@@ -1,11 +1,11 @@
-import { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { FlatList, Text, View } from 'react-native'
 import categoriesData from '../../testing/CategoryTestData.json'
 import Categories from './Categories'
 
 const allCategory = { _id: 'all', id: 'all', name: 'All' }
 
-export default function ShopByCategory({ data = categoriesData, activeCategory = 'all', onSelectCategory = () => { } }) {
+const ShopByCategory = ({ data = categoriesData, activeCategory = 'all', onSelectCategory = () => { } }) => {
   const list = useMemo(() => {
     return Array.isArray(data) && data.length > 0 ? [allCategory, ...data] : [allCategory]
   }, [data])
@@ -44,3 +44,5 @@ export default function ShopByCategory({ data = categoriesData, activeCategory =
     </View>
   )
 }
+
+export default React.memo(ShopByCategory)

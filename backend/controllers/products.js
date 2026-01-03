@@ -59,8 +59,8 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     // Notify all users about the new product
     const { notifyAllUsers } = require('../utils/notifications');
     notifyAllUsers(
-        'New Product Added! 🎆',
-        `${product.name} is now available for ₹${product.price}. Check it out!`,
+        'New Arrival! 🎆',
+        `${product.name} is now available. Check it out!`,
         'promotion',
         { productId: product._id }
     );
@@ -80,6 +80,10 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     if (!product) {
         return res.status(404).json({ success: false, error: 'Product not found' });
     }
+
+    // Capture old states for notifications
+    const wasDiwaliSpecial = product.isDiwaliSpecial;
+    const wasFeatured = product.isFeatured;
 
     // Handle multiple images if uploaded
     if (req.files && req.files.length > 0) {
@@ -105,6 +109,29 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
         new: true,
         runValidators: true
     });
+
+    // Check for status changes to trigger notifications
+    const { notifyAllUsers } = require('../utils/notifications');
+
+    // 1. New Diwali Special
+    if (!wasDiwaliSpecial && product.isDiwaliSpecial) {
+        notifyAllUsers(
+            'Diwali Special Alert! 🕯️',
+            `${product.name} is now a Diwali Special! Shop now for the best deals.`,
+            'promotion',
+            { productId: product._id }
+        );
+    }
+
+    // 2. New Featured Product (only notify if not already notified as Diwali special to avoid spam)
+    else if (!wasFeatured && product.isFeatured) {
+        notifyAllUsers(
+            'Featured Product! ⭐',
+            `Check out our featured product: ${product.name}`,
+            'promotion',
+            { productId: product._id }
+        );
+    }
 
     res.status(200).json({
         success: true,

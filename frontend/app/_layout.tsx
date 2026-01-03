@@ -16,19 +16,23 @@ const ProtectedLayout = () => {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inAdminGroup = segments[0] === "(admin)";
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace("/(auth)/Login");
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect based on role if already authenticated
-      if (isAdmin) {
-        router.replace("/(admin)/AdminMain");
-      } else {
-        router.replace("/(tabs)/Home");
+    if (!isAuthenticated) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/Login");
+      }
+    } else {
+      // Authenticated
+      if (inAuthGroup || segments.length === 0 || segments[0] === "index") {
+        if (isAdmin) {
+          router.replace("/(admin)/AdminMain");
+        } else {
+          router.replace("/(tabs)/Home");
+        }
       }
     }
-  }, [isAuthenticated, segments, isLoading]);
+  }, [isAuthenticated, segments, isLoading, isAdmin]);
 
   if (isLoading) {
     return (

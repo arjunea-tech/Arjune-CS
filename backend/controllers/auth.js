@@ -72,6 +72,11 @@ exports.login = asyncHandler(async (req, res, next) => {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
+    // Check if user is blocked
+    if (user.status === 'Blocked') {
+        return res.status(403).json({ success: false, error: 'Your account has been blocked. Please contact admin.' });
+    }
+
     sendTokenResponse(user, 200, res);
 });
 

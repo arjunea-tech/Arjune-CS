@@ -1,13 +1,16 @@
+import React from 'react'
 import { FlatList, Text, View } from 'react-native'
 import productsData from '../../testing/ProductsTestData.json'
 import Product from './Product'
 
-export default function BestSellingProducts({ data = productsData }) {
-  const list = Array.isArray(data) ? data.filter(p => p.bestSelling) : []
+const BestSellingProducts = ({ data = productsData }) => {
+  const list = React.useMemo(() => (Array.isArray(data) ? data.filter(p => p.bestSelling) : []), [data])
 
-  const renderItem = ({ item }) => (
+  const renderItem = React.useCallback(({ item }) => (
     <Product product={item} horizontal />
-  )
+  ), [])
+
+  const keyExtractor = React.useCallback((item) => (item._id || item.id || '').toString(), [])
 
   if (list.length === 0) return null
 
@@ -18,7 +21,7 @@ export default function BestSellingProducts({ data = productsData }) {
       <FlatList
         data={list}
         renderItem={renderItem}
-        keyExtractor={(item) => (item._id || item.id || '').toString()}
+        keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingRight: 16 }}
@@ -27,3 +30,5 @@ export default function BestSellingProducts({ data = productsData }) {
     </View>
   )
 }
+
+export default React.memo(BestSellingProducts)

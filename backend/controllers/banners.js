@@ -66,13 +66,11 @@ exports.updateBanner = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/banners/:id
 // @access  Private/Admin
 exports.deleteBanner = asyncHandler(async (req, res, next) => {
-    const banner = await Banner.findById(req.params.id);
+    const banner = await Banner.findByIdAndDelete(req.params.id);
 
     if (!banner) {
         return res.status(404).json({ success: false, error: 'Banner not found' });
     }
-
-    await banner.remove();
 
     res.status(200).json({
         success: true,

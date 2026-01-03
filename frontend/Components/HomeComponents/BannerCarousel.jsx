@@ -1,15 +1,15 @@
 import { Image } from 'expo-image'
+import React, { useState } from 'react'
 import { Dimensions, Text, View } from 'react-native'
-import { useSharedValue } from 'react-native-reanimated'
-import Carousel, { Pagination } from 'react-native-reanimated-carousel'
+import Carousel from 'react-native-reanimated-carousel'
 import { COLORS } from '../../constant/theme'
 import banners from '../../testing/BannerTestData.json'
 import { resolveImageUrl } from '../utils/imageUrl'
 
 const { width } = Dimensions.get('window')
 
-export default function BannerCarousel({ data = banners }) {
-  const progress = useSharedValue(0)
+const BannerCarousel = ({ data = banners }) => {
+  const [activeIndex, setActiveIndex] = useState(0)
 
   // If there are no banners, render a placeholder so layout remains consistent
   if (!Array.isArray(data) || data.length === 0) {
@@ -33,10 +33,9 @@ export default function BannerCarousel({ data = banners }) {
         autoPlay
         loop
         data={data}
-        scrollAnimationDuration={3000}
-        onProgressChange={(_, absoluteProgress) => {
-          progress.value = absoluteProgress
-        }}
+        scrollAnimationDuration={1000}
+        autoPlayInterval={3000}
+        onSnapToItem={(index) => setActiveIndex(index)}
         renderItem={({ item }) => (
           <View className="mx-4 h-full rounded-2xl overflow-hidden" style={{ width: width - 32 }}>
             <Image
@@ -55,25 +54,22 @@ export default function BannerCarousel({ data = banners }) {
         )}
       />
 
-      {/* ✅ Pagination Dots */}
-      <Pagination.Basic
-        progress={progress}
-        data={data}
-        dotStyle={{
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: '#D1D5DB',
-        }}
-        activeDotStyle={{
-          backgroundColor: COLORS.primary,
-        }}
-        containerStyle={{
-          gap: 6,
-          marginTop: 10,
-          alignSelf: 'center',
-        }}
-      />
+      {/* ✅ Pagination Dots (Simple state-based implementation) */}
+      <View className="flex-row justify-center gap-1.5 mt-2">
+        {data.map((_, index) => (
+          <View
+            key={`dot-${index}`}
+            style={{
+              width: index === activeIndex ? 16 : 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: index === activeIndex ? COLORS.primary : '#D1D5DB',
+            }}
+          />
+        ))}
+      </View>
     </View>
   )
 }
+
+export default React.memo(BannerCarousel)

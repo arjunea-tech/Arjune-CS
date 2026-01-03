@@ -29,6 +29,11 @@ exports.protect = asyncHandler(async (req, res, next) => {
             return res.status(401).json({ success: false, error: 'User no longer exists' });
         }
 
+        // Check if user is blocked
+        if (req.user.status === 'Blocked') {
+            return res.status(403).json({ success: false, error: 'Your account has been blocked. Please contact admin.' });
+        }
+
         next();
     } catch (err) {
         return res.status(401).json({ success: false, error: 'Not authorized to access this route' });

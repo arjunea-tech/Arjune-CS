@@ -5,27 +5,9 @@ import { useAuth } from "../Components/utils/AuthContext";
 import "./global.css";
 
 export default function Index() {
-  const { user, isLoading, logout } = useAuth();
-  const [shouldClearAuth, setShouldClearAuth] = useState(false);
+  const { isLoading } = useAuth();
 
-  // TEMPORARY: Uncomment the line below to force logout on app start (for testing)
-  // useEffect(() => { logout(); }, []);
-
-  // Show nothing while checking authentication
-  if (isLoading) {
-    return null;
-  }
-
-  // Not logged in - go to login
-  if (!user) {
-    return <Redirect href="/(auth)/Login" />;
-  }
-
-  // Admin user - go to admin panel
-  if (user.role === 'admin') {
-    return <Redirect href="/(admin)/AdminMain" />;
-  }
-
-  // Customer user - go to home tabs
-  return <Redirect href="/(tabs)/Home" />;
+  // Redirection is handled by the ProtectedLayout in _layout.tsx
+  // This file just serves as the entry point.
+  return null;
 }
