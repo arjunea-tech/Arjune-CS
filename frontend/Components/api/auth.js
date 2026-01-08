@@ -78,6 +78,24 @@ const authAPI = {
             throw error;
         }
     },
+    // Google login
+    googleLogin: async (token) => {
+        try {
+            const response = await api.post('/auth/google', { token });
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+    // Reset password
+    resetPassword: async (email, password) => {
+        try {
+            const response = await api.post('/auth/resetpassword', { email, password });
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
 };
 
 export default authAPI;

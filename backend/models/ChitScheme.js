@@ -23,6 +23,10 @@ const ChitSchemeSchema = new mongoose.Schema({
         type: String,
         maxlength: [500, 'Description can not be more than 500 characters']
     },
+    nextDueDate: {
+        type: String,
+        default: ''
+    },
     createdAt: {
         type: Date,
         default: Date.now

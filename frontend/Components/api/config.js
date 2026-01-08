@@ -7,14 +7,11 @@ import { Platform } from 'react-native';
 // For iOS Simulator: use localhost
 // For Physical Device: use your computer's IP address (e.g., 192.168.x.x)
 const getBaseURL = () => {
-    // Using IP address for physical device - works for all platforms
-    return 'http://192.168.1.53:5000/api/v1';
-
-    // Uncomment below for emulators only:
-    // if (Platform.OS === 'android') {
-    //     return 'http://10.0.2.2:5000/api/v1'; // Android emulator
-    // }
-    // return 'http://localhost:5000/api/v1'; // iOS simulator
+    if (Platform.OS === 'web') {
+        return 'http://localhost:5000/api/v1';
+    }
+    // For Physical Device/Emulator
+    return 'http://192.168.1.38:5000/api/v1';
 };
 
 const API_BASE_URL = getBaseURL();

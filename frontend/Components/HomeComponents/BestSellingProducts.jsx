@@ -1,9 +1,8 @@
 import React from 'react'
 import { FlatList, Text, View } from 'react-native'
-import productsData from '../../testing/ProductsTestData.json'
 import Product from './Product'
 
-const BestSellingProducts = ({ data = productsData }) => {
+const BestSellingProducts = ({ data = [] }) => {
   const list = React.useMemo(() => (Array.isArray(data) ? data.filter(p => p.bestSelling) : []), [data])
 
   const renderItem = React.useCallback(({ item }) => (

@@ -46,9 +46,10 @@ export default function Orders() {
     );
 
     const handleUpdateStatus = async (id, currentStatus) => {
-        const nextStatus = currentStatus === 'Processing' ? 'Shipped' :
-            currentStatus === 'Shipped' ? 'Out for Delivery' :
-                currentStatus === 'Out for Delivery' ? 'Delivered' : 'Delivered';
+        const nextStatus = currentStatus === 'Requested' ? 'Processing' :
+            currentStatus === 'Processing' ? 'Shipped' :
+                currentStatus === 'Shipped' ? 'Out for Delivery' :
+                    currentStatus === 'Out for Delivery' ? 'Delivered' : 'Delivered';
 
         if (nextStatus === currentStatus) return; // Already delivered
 
@@ -63,13 +64,12 @@ export default function Orders() {
         }
     };
 
-    const tabs = ['All', 'Pending', 'Shipped', 'Delivered'];
+    const tabs = ['All', 'Requested', 'Processing', 'Shipped', 'Delivered'];
 
     const filteredOrders = orders.filter(order => {
         // Pending map to Processing
         const statusMatch = activeTab === 'All' ||
-            order.status === activeTab ||
-            (activeTab === 'Pending' && order.status === 'Processing');
+            order.status === activeTab;
 
         const matchesSearch =
             order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,6 +79,7 @@ export default function Orders() {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'Requested': return 'bg-red-100 text-red-700';
             case 'Processing': return 'bg-orange-100 text-orange-700';
             case 'Shipped': return 'bg-blue-100 text-blue-700';
             case 'Out for Delivery': return 'bg-purple-100 text-purple-700';

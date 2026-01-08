@@ -3,12 +3,10 @@ import React, { useState } from 'react'
 import { Dimensions, Text, View } from 'react-native'
 import Carousel from 'react-native-reanimated-carousel'
 import { COLORS } from '../../constant/theme'
-import banners from '../../testing/BannerTestData.json'
 import { resolveImageUrl } from '../utils/imageUrl'
-
 const { width } = Dimensions.get('window')
 
-const BannerCarousel = ({ data = banners }) => {
+const BannerCarousel = ({ data = [] }) => {
   const [activeIndex, setActiveIndex] = useState(0)
 
   // If there are no banners, render a placeholder so layout remains consistent

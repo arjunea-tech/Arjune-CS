@@ -1,5 +1,4 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-// import productsData from '../../testing/ProductsTestData.json';
 import { THEME } from '../ui/theme';
 import { formatCurrency } from '../utils/format';
 
@@ -15,7 +14,7 @@ export default function OrderItem({ item }) {
           <Text style={styles.meta}>Qty: {item.qty}</Text>
         </View>
         <View style={styles.right}>
-          <Text style={styles.price}>${formatCurrency(total)}</Text>
+          <Text style={styles.price}>₹{formatCurrency(total)}</Text>
         </View>
       </View>
     </View>

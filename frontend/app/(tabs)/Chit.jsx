@@ -10,6 +10,7 @@ import {
   ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from 'expo-router';
 import SingleChit from "../../Components/ChitComponenets/SingleChit";
 import api from "../../Components/api/config";
 
@@ -60,50 +61,34 @@ export default function Chit() {
     }, [activeTab])
   );
 
+  const router = useRouter();
+
   const handleJoin = (scheme) => {
-    Alert.alert('Join Scheme', `To join ${scheme.name}, you need to pay the first installment of ₹${scheme.installmentAmount}.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Pay Now', onPress: () => handlePayment(scheme, 0) }
-    ]);
+    router.push({
+      pathname: '/ChitRegistration',
+      params: {
+        schemeId: scheme._id,
+        schemeName: scheme.name,
+        amount: scheme.installmentAmount
+      }
+    });
   };
 
-  const handlePayment = async (scheme, customMonthIndex = null) => {
-    try {
-      setLoading(true);
+  const handlePayment = (scheme) => {
+    if (!scheme) return;
+    const myScheme = mySchemes.find(s => s.scheme?._id === scheme._id);
+    const monthIdx = myScheme ? myScheme.monthsPaid : 0;
 
-      // Simulate Payment Gateway
-      const simulatedPaymentSuccess = true;
-
-      if (simulatedPaymentSuccess) {
-        // Determine backend month index
-        // If joining, it's 0. If paying next, it's current monthsPaid
-        let monthIdx = customMonthIndex;
-        if (monthIdx === null) {
-          const myScheme = mySchemes.find(s => s.scheme?._id === scheme._id);
-          monthIdx = myScheme ? myScheme.monthsPaid : 0;
-        }
-
-        const res = await api.post('/chit/pay', {
-          schemeId: scheme._id,
-          amount: scheme.installmentAmount,
-          monthIndex: monthIdx
-        });
-
-        if (res.data.success) {
-          Alert.alert('Success', 'Payment successful! Your installment has been recorded.');
-          fetchMySchemes();
-          fetchSchemes();
-        }
-      } else {
-        Alert.alert('Error', 'Payment failed. Please try again.');
+    router.push({
+      pathname: '/PaymentGateway',
+      params: {
+        schemeId: scheme._id,
+        amount: scheme.installmentAmount,
+        name: scheme.name,
+        monthIndex: monthIdx,
+        type: 'payment'
       }
-    } catch (error) {
-      console.error('Payment error:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Payment failed';
-      Alert.alert('Error', errorMsg);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const renderAvailableSchemes = () => (
@@ -143,9 +128,12 @@ export default function Chit() {
             <Text style={styles.label}>Total Paid:</Text>
             <Text style={styles.value}>₹{item.totalPaid}</Text>
           </View>
-          <TouchableOpacity style={styles.joinBtn} onPress={() => handlePayment(item.scheme)}>
-            <Text style={styles.joinText}>Pay Next Installment</Text>
-          </TouchableOpacity>
+          {item.scheme?.nextDueDate ? (
+            <View style={styles.dueDateContainer}>
+              <Ionicons name="calendar-outline" size={16} color="#d32f2f" />
+              <Text style={styles.dueDateText}>Next due date is: {item.scheme.nextDueDate}</Text>
+            </View>
+          ) : null}
         </View>
       ))
     )
@@ -261,18 +249,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: '#333'
   },
-  joinBtn: {
-    backgroundColor: "#f50000ff",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginVertical: 12,
+  dueDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffebee',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 12,
   },
-  joinText: {
-    color: "#fff",
-    fontWeight: "600",
-    marginLeft: 6,
+  dueDateText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#d32f2f',
   },
 });

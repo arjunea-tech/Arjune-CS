@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router'
 import { useState, useCallback } from 'react'
 import { notificationsAPI } from '../../Components/api'
 import { useFocusEffect } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function HomeHeader({ searchValue = '', onChangeText = () => { } }) {
     const router = useRouter();
@@ -17,13 +18,20 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
 
             const fetchUnreadCount = async () => {
                 try {
+                    const userData = await AsyncStorage.getItem('user');
+                    if (!userData || !isActive) return;
+
                     const res = await notificationsAPI.getNotifications();
                     if (res.success && isActive) {
                         const count = res.data.filter(n => !n.isRead).length;
                         setUnreadCount(count);
                     }
                 } catch (error) {
-                    console.error('Error fetching unread count:', error);
+                    // Silently fail for "Network error" or "Not authorized" to keep the console clean
+                    // This clears the visible error for the user while they are not logged in
+                    if (error.message && !error.message.includes('Network error') && !error.message.includes('401')) {
+                        console.error('Error fetching unread count:', error);
+                    }
                 }
             };
 

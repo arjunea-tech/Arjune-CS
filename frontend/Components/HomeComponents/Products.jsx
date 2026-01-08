@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { FlatList, Text, TouchableOpacity, View } from 'react-native'
-import productsData from '../../testing/ProductsTestData.json'
 import Product from './Product'
 
-export default function Products({ data = productsData, onClear = () => { } }) {
+export default function Products({ data = [], onClear = () => { } }) {
   const list = Array.isArray(data) ? data : []
 
   const renderItem = ({ item }) => (

@@ -14,6 +14,7 @@ export default function AddChitScheme() {
     const [installment, setInstallment] = useState('');
     const [bonus, setBonus] = useState(''); // Not used in backend yet
     const [description, setDescription] = useState('');
+    const [nextDueDate, setNextDueDate] = useState('');
 
     const handleCreate = async () => {
         if (!name || !totalAmount || !months || !installment) {
@@ -27,7 +28,8 @@ export default function AddChitScheme() {
                 totalAmount: Number(totalAmount),
                 installmentAmount: Number(installment),
                 durationMonths: Number(months),
-                description
+                description,
+                nextDueDate
             };
 
             const res = await api.post('/chit/schemes', payload);
@@ -111,6 +113,16 @@ export default function AddChitScheme() {
                                 className="bg-gray-50 p-3 rounded-lg text-gray-800 border border-gray-200"
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Next Due Date (e.g. 10th Jan 2026)</Text>
+                        <TextInput
+                            placeholder="Enter next payment deadline"
+                            value={nextDueDate}
+                            onChangeText={setNextDueDate}
+                            className="bg-gray-50 p-3 rounded-lg text-gray-800 border border-gray-200"
+                        />
                     </View>
 
                     <View>

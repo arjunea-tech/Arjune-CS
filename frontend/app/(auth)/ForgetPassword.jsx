@@ -1,19 +1,21 @@
 import { Formik } from 'formik';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import * as YUP from 'yup';
 
 import { CustomButton } from '../../Components/LoginComponents/CustomButton';
 import { InputField } from '../../Components/LoginComponents/InputField';
 import { THEME } from '../../Components/ui/theme';
-import users from "../../testing/UserTestData.json";
+import { authAPI } from '../../Components/api';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 
 const ResetPasswordSchema = YUP.object().shape({
   email: YUP.string()
@@ -30,25 +32,27 @@ const ResetPasswordSchema = YUP.object().shape({
 });
 
 export default function ResetPassword() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const handleResetPassword = async (email, password) => {
     try {
-        // Simulate API call to reset password
-        const user = users.find(u => u.email === email);
-        if (user) {
-          user.password = password;
-          users.filter(u => u.id !== user.id);
-          users.push(user);
-        } else {
-          Alert.alert('Error', 'Email not found.');
-          return;
-        }
-    }catch (error) {
+      setLoading(true);
+      const res = await authAPI.resetPassword(email, password);
+
+      if (res.success) {
+        Alert.alert(
+          'Password Reset Successful',
+          'Your password has been updated. You can now login with your new password.',
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/Login') }]
+        );
+      }
+    } catch (error) {
       console.error('Error resetting password:', error);
+      Alert.alert('Error', error.response?.data?.error || 'Failed to reset password. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    Alert.alert(
-      'Password Reset Successful',
-      `Password updated for ${email}`
-    );
   };
 
   return (
@@ -133,6 +137,8 @@ export default function ResetPassword() {
                 <CustomButton
                   title="RESET PASSWORD"
                   onPress={handleSubmit}
+                  loading={loading}
+                  disabled={loading}
                   customStyle={{ marginTop: 24 }}
                 />
               </>

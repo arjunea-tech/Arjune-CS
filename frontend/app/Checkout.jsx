@@ -16,7 +16,6 @@ export default function Checkout() {
   const router = useRouter();
   const { user } = useAuth();
   const { totals, clearCart, cartItems } = useCart();
-  const [payment, setPayment] = useState('card');
 
   // Initialize address from user data
   const [address, setAddress] = useState(user?.address || '');
@@ -42,7 +41,7 @@ export default function Checkout() {
       const orderData = {
         orderItems,
         shippingAddress: address,
-        paymentMethod: payment,
+        paymentMethod: 'Requested',
         itemsPrice: totals.subtotal,
         taxPrice: 0, // Calculate tax if needed
         shippingPrice: totals.shipping,
@@ -63,19 +62,6 @@ export default function Checkout() {
     }
   }
 
-  const handleUPIPayment = async (provider) => {
-    const upiId = 'merchant@upi'; // replace with your merchant's UPI ID
-    const merchant = 'CrackerShop';
-    const amount = totals?.grandTotal ?? 0;
-    const note = `Order payment (${provider})`;
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchant)}&tn=${encodeURIComponent(note)}&am=${encodeURIComponent(amount)}&cu=INR`;
-
-    try {
-      await Linking.openURL(upiUrl);
-    } catch (e) {
-      Alert.alert('Unable to open UPI app', 'No UPI app found or the app could not be opened. Please install Paytm/GPay/PhonePe or try again.');
-    }
-  }
 
   return (
     <View style={styles.container}>
@@ -132,55 +118,6 @@ export default function Checkout() {
               </View>
             )}
           </Card>
-
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          <TouchableOpacity
-            style={[styles.payOption, payment === 'card' && styles.payOptionActive]}
-            onPress={() => setPayment('card')}
-            activeOpacity={0.8}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={styles.payRow}>
-              <Text>Credit/Debit card</Text>
-              <Ionicons name={payment === 'card' ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={payment === 'card' ? THEME.colors.primary : '#999'} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.payOption, payment === 'upi' && styles.payOptionActive]}
-            onPress={() => setPayment('upi')}
-            activeOpacity={0.8}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={styles.payRow}>
-              <Text>UPI Method</Text>
-              <Ionicons name={payment === 'upi' ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={payment === 'upi' ? THEME.colors.primary : '#999'} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.payOption, payment === 'cod' && styles.payOptionActive]}
-            onPress={() => setPayment('cod')}
-            activeOpacity={0.8}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={styles.payRow}>
-              <Text>Cash on Delivery</Text>
-              <Ionicons name={payment === 'cod' ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={payment === 'cod' ? THEME.colors.primary : '#999'} />
-            </View>
-          </TouchableOpacity>
-
-          {payment === 'upi' && (
-            <Card style={{ marginTop: 12 }}>
-              <Text style={{ fontWeight: '700', marginBottom: 6 }}>UPI Options</Text>
-              <Text>Paytm / Google Pay / PhonePe</Text>
-              <Text style={{ marginTop: 6, color: THEME.colors.subtext }}>Tap a provider below to open your UPI app and pay.</Text>
-              <View style={{ flexDirection: 'row', marginTop: 10 }}>
-                <Button style={{ flex: 1, marginRight: 8 }} onPress={() => handleUPIPayment('paytm')}>Pay with Paytm</Button>
-                <Button style={{ flex: 1 }} onPress={() => handleUPIPayment('gpay')}>Pay with GPay</Button>
-              </View>
-            </Card>
-          )}
 
           <OrderSummary totals={totals} buttonLabel="Place Order" onProceed={placeOrder} />
         </View>

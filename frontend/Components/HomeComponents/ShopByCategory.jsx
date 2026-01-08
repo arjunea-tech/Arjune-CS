@@ -1,11 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import { FlatList, Text, View } from 'react-native'
-import categoriesData from '../../testing/CategoryTestData.json'
 import Categories from './Categories'
-
 const allCategory = { _id: 'all', id: 'all', name: 'All' }
 
-const ShopByCategory = ({ data = categoriesData, activeCategory = 'all', onSelectCategory = () => { } }) => {
+const ShopByCategory = ({ data = [], activeCategory = 'all', onSelectCategory = () => { } }) => {
   const list = useMemo(() => {
     return Array.isArray(data) && data.length > 0 ? [allCategory, ...data] : [allCategory]
   }, [data])

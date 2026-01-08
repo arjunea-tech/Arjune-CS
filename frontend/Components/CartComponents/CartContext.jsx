@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import productsData from '../../testing/ProductsTestData.json';
 
 const CartContext = createContext(null);
 
@@ -12,11 +11,21 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(initial);
 
   const addItem = React.useCallback((product, qty = 1) => {
+    if (!product) return;
     setCartItems(prev => {
       const pId = product._id || product.id;
-      const found = prev.find(i => String(i.product._id || i.product.id) === String(pId));
+      if (!pId) return prev;
+
+      const found = prev.find(i => {
+        const itemId = i.product?._id || i.product?.id;
+        return String(itemId) === String(pId);
+      });
+
       if (found) {
-        return prev.map(i => String(i.product._id || i.product.id) === String(pId) ? { ...i, quantity: i.quantity + qty } : i);
+        return prev.map(i => {
+          const itemId = i.product?._id || i.product?.id;
+          return String(itemId) === String(pId) ? { ...i, quantity: i.quantity + qty } : i;
+        });
       }
       return [...prev, { product, quantity: qty }];
     });
@@ -34,6 +43,7 @@ export function CartProvider({ children }) {
 
   const totals = useMemo(() => {
     const subtotal = cartItems.reduce((s, it) => {
+      if (!it.product) return s;
       const price = (it.product.discountPrice && it.product.discountPrice < it.product.price)
         ? it.product.discountPrice
         : (it.product.price || 0);

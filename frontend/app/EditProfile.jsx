@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useAuth } from "../Components/utils/AuthContext";
 import { authAPI } from "../Components/api";
+import { resolveImageUrl } from "../Components/utils/imageUrl";
 
 export default function EditProfile() {
   const navigation = useNavigation();
@@ -37,7 +38,7 @@ export default function EditProfile() {
     try {
       setLoading(true);
       const res = await authAPI.getMe();
-      if (res.success) {
+      if (res.success && user?.token) {
         await login({
           token: user.token,
           ...res.data
@@ -107,7 +108,7 @@ export default function EditProfile() {
       }
 
       const res = await authAPI.updateDetails(formData);
-      if (res.success) {
+      if (res.success && user?.token) {
         // Update local auth context with new user data
         await login({
           token: user.token, // Keep existing token
@@ -168,7 +169,7 @@ export default function EditProfile() {
       <View style={styles.imageContainer}>
         <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
           {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            <Image source={{ uri: resolveImageUrl(profileImage) }} style={styles.profileImage} />
           ) : (
             <View style={styles.placeholder}>
               <Ionicons name="person" size={50} color="#aaa" />
@@ -219,8 +220,8 @@ export default function EditProfile() {
         <TextInput
           placeholder="District"
           value={district}
-          editable={false}
-          style={[styles.input, styles.disabled]}
+          onChangeText={setDistrict}
+          style={styles.input}
         />
       </View>
 
@@ -229,8 +230,8 @@ export default function EditProfile() {
         <TextInput
           placeholder="State"
           value={state}
-          editable={false}
-          style={[styles.input, styles.disabled]}
+          onChangeText={setState}
+          style={styles.input}
         />
       </View>
 

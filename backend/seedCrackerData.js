@@ -212,10 +212,14 @@ const seedData = async () => {
     try {
         await connectDB();
 
-        // Clear existing data
-        console.log('🗑️ Clearing existing categories and products...');
-        await Category.deleteMany({});
-        await Product.deleteMany({});
+        // Clear existing data by dropping collections (this also clears indexes)
+        console.log('🗑️ Dropping existing categories and products...');
+        try {
+            await mongoose.connection.db.dropCollection('categories');
+            await mongoose.connection.db.dropCollection('products');
+        } catch (err) {
+            console.log('Note: Collections may not exist, proceeding...');
+        }
 
         // Seed Categories
         console.log('🌱 Seeding categories...');
@@ -236,7 +240,8 @@ const seedData = async () => {
         console.log('✅ Database seeded successfully with Cracker data!');
         process.exit(0);
     } catch (err) {
-        console.error('❌ Error seeding data:', err);
+        console.error('❌ Error seeding data:');
+        console.dir(err);
         process.exit(1);
     }
 };

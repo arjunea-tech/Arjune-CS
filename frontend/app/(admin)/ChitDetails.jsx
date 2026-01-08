@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
+import { FlatList, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import api from '../../Components/api/config';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -13,8 +13,8 @@ export default function ChitDetails() {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedMember, setSelectedMember] = useState(null);
+    const [nextDueDate, setNextDueDate] = useState('');
+    const [updatingDate, setUpdatingDate] = useState(false);
 
     const fetchDetails = async () => {
         try {
@@ -22,6 +22,7 @@ export default function ChitDetails() {
             const schemeRes = await api.get(`/chit/schemes/${id}`);
             if (schemeRes.data.success) {
                 setScheme(schemeRes.data.data);
+                setNextDueDate(schemeRes.data.data.nextDueDate || '');
             }
 
             // Fetch participants
@@ -43,16 +44,19 @@ export default function ChitDetails() {
         }, [id])
     );
 
-    const handleMarkPayment = (member) => {
-        setSelectedMember(member);
-        setModalVisible(true);
-    };
-
-    const confirmPayment = (month) => {
-        // Mock payment implementation for Admin to record offline payment? 
-        // Or call an API? For now, alert mock.
-        Alert.alert('Simulated', `Payment for Month ${month} recorded for ${selectedMember.name}!`);
-        setModalVisible(false);
+    const handleUpdateDueDate = async () => {
+        try {
+            setUpdatingDate(true);
+            const res = await api.put(`/chit/schemes/${id}`, { nextDueDate });
+            if (res.data.success) {
+                Alert.alert('Success', 'Next due date updated successfully!');
+                setScheme(res.data.data);
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update due date');
+        } finally {
+            setUpdatingDate(false);
+        }
     };
 
     const renderMemberCard = ({ item }) => (
@@ -82,14 +86,6 @@ export default function ChitDetails() {
                     />
                 </View>
             </View>
-
-            {/* Quick Action */}
-            <TouchableOpacity
-                onPress={() => handleMarkPayment(item)}
-                className="mt-3 bg-gray-50 py-2 rounded-lg items-center border border-gray-200"
-            >
-                <Text className="text-xs font-bold text-gray-600">Mark Payment</Text>
-            </TouchableOpacity>
         </View>
     );
 
@@ -141,6 +137,26 @@ export default function ChitDetails() {
                 </View>
             </View>
 
+            {/* Admin Controls */}
+            <View className="p-4 bg-white border-b border-gray-100 mb-2">
+                <Text className="text-xs font-bold text-gray-400 uppercase mb-2">Update Next Due Date</Text>
+                <View className="flex-row gap-2">
+                    <TextInput
+                        placeholder="e.g. 15th Feb 2026"
+                        value={nextDueDate}
+                        onChangeText={setNextDueDate}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                    />
+                    <TouchableOpacity
+                        onPress={handleUpdateDueDate}
+                        disabled={updatingDate}
+                        className={`px-4 rounded-lg items-center justify-center ${updatingDate ? 'bg-orange-300' : 'bg-orange-500'}`}
+                    >
+                        {updatingDate ? <ActivityIndicator size="small" color="white" /> : <Text className="text-white font-bold">Update</Text>}
+                    </TouchableOpacity>
+                </View>
+            </View>
+
             {/* Members List */}
             <FlatList
                 data={members}
@@ -154,47 +170,6 @@ export default function ChitDetails() {
                     </View>
                 )}
             />
-
-            {/* Payment Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View className="flex-1 justify-end bg-black/50">
-                    <View className="bg-white rounded-t-3xl p-6 h-[50%]">
-                        <View className="flex-row justify-between items-center mb-4">
-                            <Text className="text-xl font-bold text-gray-800">Record Payment</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="gray" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text className="text-gray-500 mb-4">
-                            Select the month to mark as paid for <Text className="font-bold text-gray-800">{selectedMember?.name}</Text>.
-                        </Text>
-
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {Array.from({ length: scheme.durationMonths }, (_, i) => i + 1).map((month) => (
-                                <TouchableOpacity
-                                    key={month}
-                                    onPress={() => confirmPayment(month)}
-                                    className="flex-row items-center justify-between p-4 mb-2 bg-gray-50 rounded-xl border border-gray-100"
-                                >
-                                    <Text className="font-bold text-gray-700">Month {month}</Text>
-                                    {/* Mock logic for paid check */}
-                                    {month <= (selectedMember?.paidMonths || 0) ? (
-                                        <Text className="text-green-600 font-bold text-xs">PAID</Text>
-                                    ) : (
-                                        <Text className="text-orange-500 font-bold text-xs">MARK PAID</Text>
-                                    )}
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 }

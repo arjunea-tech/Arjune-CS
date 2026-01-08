@@ -42,7 +42,30 @@ const notifyAllUsers = async (title, message, type = 'promotion', data = {}) => 
     }
 };
 
+/**
+ * Create a notification for all admin users
+ */
+const notifyAdmins = async (title, message, type = 'system', data = {}) => {
+    try {
+        const admins = await User.find({ role: 'admin' }).select('_id');
+        const notifications = admins.map(admin => ({
+            user: admin._id,
+            title,
+            message,
+            type,
+            data
+        }));
+
+        await Notification.insertMany(notifications);
+        return true;
+    } catch (error) {
+        console.error('Error notifying admins:', error);
+        return false;
+    }
+};
+
 module.exports = {
     createNotification,
-    notifyAllUsers
+    notifyAllUsers,
+    notifyAdmins
 };

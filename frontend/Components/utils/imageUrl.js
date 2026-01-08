@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const SERVER_IP = '192.168.1.53'; // Match config.js
+const SERVER_IP = '192.168.1.38'; // Match config.js
 const BASE_URL = `http://${SERVER_IP}:5000`;
 
 /**
@@ -10,11 +10,13 @@ const BASE_URL = `http://${SERVER_IP}:5000`;
 export const resolveImageUrl = (url) => {
     if (!url) return null;
 
-    // If it's already a full URL (but might have localhost)
-    if (url.startsWith('http')) {
+    // If it's already a full URL or a local file URI
+    if (url.startsWith('http') || url.startsWith('file')) {
         // Replace localhost with server IP for mobile devices
-        if (url.includes('localhost') || url.includes('127.0.0.1')) {
-            return url.replace(/localhost|127\.0\.0\.1/, SERVER_IP);
+        if (url.startsWith('http')) {
+            if (url.includes('localhost') || url.includes('127.0.0.1')) {
+                return url.replace(/localhost|127\.0\.0\.1/, SERVER_IP);
+            }
         }
         return url;
     }

@@ -12,7 +12,6 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { THEME } from '../Components/ui/theme';
-import productsData from '../testing/ProductsTestData.json';
 import { productsAPI } from '../Components/api';
 import { resolveImageUrl } from '../Components/utils/imageUrl';
 
@@ -24,6 +23,7 @@ export default function ProductView() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
+  const { addItem } = useCart();
 
   useEffect(() => {
     if (id) {
@@ -37,20 +37,14 @@ export default function ProductView() {
       if (res.success) {
         setProduct(res.data);
         setSelectedImage(resolveImageUrl(res.data.image));
-      } else {
-        const local = productsData.find(p => String(p._id || p.id) === String(id));
-        setProduct(local);
-        setSelectedImage(resolveImageUrl(local?.image));
       }
     } catch (e) {
       console.log('Error fetching product:', e);
-      const local = productsData.find(p => String(p._id || p.id) === String(id));
-      setProduct(local);
-      setSelectedImage(resolveImageUrl(local?.image));
+      setProduct(null);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -144,12 +138,21 @@ export default function ProductView() {
 
         {/* BUTTONS (MOVED UP) */}
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.whiteBtn}>
+          <TouchableOpacity
+            style={styles.whiteBtn}
+            onPress={() => addItem(product, 1)}
+          >
             <MaterialCommunityIcons name="cart-outline" size={18} color="#ff7f00" />
             <Text style={styles.btnText}>Add to Cart</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.whiteBtn}>
+          <TouchableOpacity
+            style={styles.whiteBtn}
+            onPress={() => {
+              addItem(product, 1);
+              router.push('/Checkout');
+            }}
+          >
             <MaterialCommunityIcons name="flash" size={18} color="#ff7f00" />
             <Text style={styles.btnText}>Buy Now</Text>
           </TouchableOpacity>

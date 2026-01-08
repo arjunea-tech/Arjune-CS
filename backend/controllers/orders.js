@@ -32,6 +32,15 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
 
         const createdOrder = await order.save();
 
+        // Notify Admins about new order request
+        const { notifyAdmins } = require('../utils/notifications');
+        await notifyAdmins(
+            'New Order Request! 🛒',
+            `Customer: ${req.user.name}\nMobile: ${req.user.mobileNumber}\nAddress: ${shippingAddress}\nTotal: ₹${totalPrice}`,
+            'order',
+            { orderId: createdOrder._id, userId: req.user._id }
+        );
+
         res.status(201).json({
             success: true,
             data: createdOrder

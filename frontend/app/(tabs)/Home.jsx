@@ -8,9 +8,6 @@ import FilterChips from '../../Components/HomeComponents/FilterChips'
 import HomeHeader from '../../Components/HomeComponents/HomeHeader'
 import Product from '../../Components/HomeComponents/Product'
 import ShopByCategory from '../../Components/HomeComponents/ShopByCategory'
-import categoriesData from '../../testing/CategoryTestData.json'
-import productsData from '../../testing/ProductsTestData.json'
-import bannerData from '../../testing/BannerTestData.json'
 import ProductHorizontalList from '../../Components/HomeComponents/ProductHorizontalList'
 
 export default function Home() {
@@ -18,9 +15,9 @@ export default function Home() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeFilter, setActiveFilter] = useState('default')
-  const [products, setProducts] = useState(productsData)
-  const [categories, setCategories] = useState(categoriesData)
-  const [banners, setBanners] = useState(bannerData)
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(false)
 
   // Debounce search input
@@ -63,10 +60,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Fallback to mock data if API fails
-      setProducts(productsData);
-      setCategories(categoriesData);
-      setBanners(bannerData);
     } finally {
       setLoading(false);
     }

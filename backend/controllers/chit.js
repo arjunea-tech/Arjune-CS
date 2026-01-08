@@ -267,3 +267,62 @@ exports.getSchemeParticipants = async (req, res, next) => {
         next(err);
     }
 };
+// @desc      Request to join a chit scheme
+// @route     POST /api/v1/chit/request-join
+// @access    Private (User)
+exports.requestJoin = async (req, res, next) => {
+    try {
+        const { schemeId, name, mobileNumber, address } = req.body;
+
+        const scheme = await ChitScheme.findById(schemeId);
+        if (!scheme) {
+            return next(new ErrorResponse('Scheme not found', 404));
+        }
+
+        // Use provided details or fallback to user profile
+        const participantName = name || req.user.name;
+        const participantMobile = mobileNumber || req.user.mobileNumber;
+        const participantAddress = address || req.user.address;
+
+        // Check if user has already joined this scheme
+        const alreadyJoined = await ChitPayment.findOne({
+            user: req.user.id,
+            scheme: schemeId
+        });
+
+        if (alreadyJoined) {
+            return next(new ErrorResponse('You are already a member of this scheme', 400));
+        }
+
+        // Create the enrollment (first month payment record)
+        const enrollment = await ChitPayment.create({
+            user: req.user.id,
+            scheme: schemeId,
+            amount: scheme.installmentAmount,
+            monthIndex: 0,
+            status: 'Paid'
+        });
+
+        // Notify Admins
+        const { notifyAdmins } = require('../utils/notifications');
+        await notifyAdmins(
+            'New Chit Enrollment! 🎊',
+            `Participant: ${participantName}\nMobile: ${participantMobile}\nAddress: ${participantAddress}\nScheme: ${scheme.name}`,
+            'chit',
+            {
+                schemeId: scheme._id,
+                userId: req.user._id,
+                paymentId: enrollment._id,
+                customDetails: { name: participantName, mobile: participantMobile, address: participantAddress }
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'You have joined the scheme successfully!',
+            data: enrollment
+        });
+    } catch (err) {
+        next(err);
+    }
+};

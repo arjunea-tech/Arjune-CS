@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, View } from "react-native";
+import { resolveImageUrl } from "../utils/imageUrl";
 import { useAuth } from "../utils/AuthContext";
 
 export default function ProfileAvatar() {
@@ -9,7 +10,7 @@ export default function ProfileAvatar() {
     <View style={styles.avatarWrapper}>
       <View style={styles.avatar}>
         {user?.avatar ? (
-          <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+          <Image source={{ uri: resolveImageUrl(user.avatar) }} style={styles.avatarImage} />
         ) : (
           <Ionicons name="person" size={40} color="#666" />
         )}

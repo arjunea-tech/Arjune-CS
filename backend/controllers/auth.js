@@ -213,6 +213,32 @@ exports.deleteAddress = asyncHandler(async (req, res, next) => {
     }
 });
 
+// @desc    Reset password
+// @route   POST /api/v1/auth/resetpassword
+// @access  Public
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ success: false, error: 'Please provide email and new password' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found with this email' });
+    }
+
+    // Update password
+    user.password = password;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Password reset successful'
+    });
+});
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
     // Create token

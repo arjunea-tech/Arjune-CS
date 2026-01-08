@@ -12,12 +12,45 @@ import { FireworkDecoration } from '../../Components/LoginComponents/FireworkDec
 import { LoginCard } from '../../Components/LoginComponents/LoginCard';
 import { THEME } from '../../Components/ui/theme';
 import { useAuth } from '../../Components/utils/AuthContext';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 
-import { useState } from 'react';
+WebBrowser.maybeCompleteAuthSession();
+
+
+import { useState, useEffect } from 'react';
 
 export default function Login() {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+    iosClientId: "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+    webClientId: "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      handleGoogleSuccess(authentication.accessToken);
+    }
+  }, [response]);
+
+  const handleGoogleSuccess = async (token) => {
+    try {
+      setLoading(true);
+      // Here you would call your backend to verify the token
+      console.log('Google Token:', token);
+      // const res = await authAPI.googleLogin(token);
+      // ... same login logic as handleLogin
+    } catch (error) {
+      Alert.alert('Google Login Failed', 'Could not authenticate with Google.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleLogin = async (email, password) => {
     try {
@@ -53,8 +86,9 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    console.log('Google login clicked');
+    promptAsync();
   };
+
 
   const handleSignUp = () => {
     console.log('Sign up clicked');

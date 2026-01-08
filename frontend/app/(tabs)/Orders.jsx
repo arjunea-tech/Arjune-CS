@@ -47,9 +47,9 @@ export default function Orders() {
   const mapOrderToUI = (backendOrder) => {
     const status = backendOrder.orderStatus;
     const steps = [
-      { key: 'placed', label: 'Order placed', date: backendOrder.createdAt?.substring(0, 10), done: true },
+      { key: 'requested', label: 'Requested', date: backendOrder.createdAt?.substring(0, 10), done: true },
+      { key: 'placed', label: 'Order confirmed', date: '', done: ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
       { key: 'shipped', label: 'Shipped', date: '', done: ['Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
-      { key: 'out', label: 'Out for Delivery', date: '', done: ['Out for Delivery', 'Delivered'].includes(status) },
       { key: 'delivered', label: 'Delivered', date: backendOrder.deliveredAt?.substring(0, 10), done: status === 'Delivered' }
     ];
 
@@ -104,7 +104,7 @@ export default function Orders() {
             <View style={styles.summaryRow}>
               <Text style={{ fontWeight: '700' }}>Total</Text>
               <Text style={{ fontWeight: '700' }}>
-                ${o.totalPrice.toFixed(2)}
+                ₹{o.totalPrice.toFixed(2)}
               </Text>
             </View>
 

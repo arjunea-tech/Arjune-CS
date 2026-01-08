@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress } = require('../controllers/auth');
+const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress, resetPassword } = require('../controllers/auth');
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ const { upload } = require('../utils/storage');
 
 router.post('/register', upload.single('avatar'), register);
 router.post('/login', login);
+router.post('/resetpassword', resetPassword);
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, upload.single('avatar'), updateDetails);
 

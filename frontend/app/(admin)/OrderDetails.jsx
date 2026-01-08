@@ -69,13 +69,13 @@ export default function OrderDetails() {
 
     if (!order) return <View className="flex-1 items-center justify-center"><Text>Loading...</Text></View>;
 
-    const steps = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const steps = ['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
     // Backend uses 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'. 'Pending' might be mapped to 'Processing' or we align UI.
     // UI steps: ['Pending', 'Processing', 'Shipped', 'Delivered'] in previous code.
     // Let's align with backend enum: Processing, Shipped, Out for Delivery, Delivered.
 
     const isStepCompleted = (stepName) => {
-        const statusOrder = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+        const statusOrder = ['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
         const currentIndex = statusOrder.indexOf(order.status);
         const stepIndex = statusOrder.indexOf(stepName);
         return stepIndex <= currentIndex;
@@ -126,12 +126,12 @@ export default function OrderDetails() {
                 {/* Tracking Step */}
                 <View className="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-100">
                     <Text className="text-sm font-bold text-gray-500 uppercase mb-4">Order Status</Text>
-                    {['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].map((step, index) => (
+                    {['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'].map((step, index) => (
                         <StatusStep
                             key={step}
                             label={step}
                             isCompleted={isStepCompleted(step)}
-                            isLast={index === 3}
+                            isLast={index === 4}
                         />
                     ))}
                 </View>

@@ -13,11 +13,43 @@ import { RegisterCard } from '../../Components/RegisterComponents/RegisterCard';
 import { THEME } from '../../Components/ui/theme';
 import { authAPI } from '../../Components/api';
 import "../../Components/RegisterComponents/RegisterCard"
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 
-import { useState } from 'react';
+WebBrowser.maybeCompleteAuthSession();
+
+import { useState, useEffect } from 'react';
+
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+    iosClientId: "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+    webClientId: "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      handleGoogleSuccess(authentication.accessToken);
+    }
+  }, [response]);
+
+  const handleGoogleSuccess = async (token) => {
+    try {
+      setLoading(true);
+      console.log('Google Token:', token);
+      // const res = await authAPI.googleLogin(token);
+      // Handle success redirection...
+    } catch (error) {
+      Alert.alert('Google Login Failed', 'Could not authenticate with Google.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleRegister = async (values) => {
     try {
@@ -54,8 +86,9 @@ export default function Register() {
   };
 
   const handleGoogleRegister = () => {
-    console.log('Google registration clicked');
+    promptAsync();
   };
+
 
   return (
     <KeyboardAvoidingView
