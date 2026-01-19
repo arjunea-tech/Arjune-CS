@@ -13,9 +13,11 @@ import {
 } from 'react-native';
 import { notificationsAPI } from '../Components/api';
 import { THEME } from '../Components/ui/theme';
+import { useAuth } from '../Components/utils/AuthContext';
 
 export default function Notifications() {
     const router = useRouter();
+    const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +80,43 @@ export default function Notifications() {
         }
     };
 
+    const handleNotificationPress = (item) => {
+        if (!item.isRead) markAsRead(item._id);
+
+        if (!item.data) return;
+
+        const isAdmin = user?.role === 'admin';
+
+        switch (item.type) {
+            case 'order':
+                if (item.data.orderId) {
+                    router.push({
+                        pathname: isAdmin ? '/(admin)/OrderDetails' : '/OrderDetail',
+                        params: { id: item.data.orderId }
+                    });
+                }
+                break;
+            case 'chit':
+                if (item.data.schemeId) {
+                    router.push({
+                        pathname: isAdmin ? '/(admin)/ChitDetails' : '/(tabs)/Chit',
+                        params: isAdmin ? { id: item.data.schemeId } : {}
+                    });
+                }
+                break;
+            case 'promotion':
+                if (item.data.productId) {
+                    router.push({
+                        pathname: '/ProductView',
+                        params: { id: item.data.productId }
+                    });
+                }
+                break;
+            default:
+                break;
+        }
+    };
+
     const getIcon = (type) => {
         switch (type) {
             case 'order': return 'cart-outline';
@@ -89,7 +128,7 @@ export default function Notifications() {
 
     const renderNotification = ({ item }) => (
         <TouchableOpacity
-            onPress={() => !item.isRead && markAsRead(item._id)}
+            onPress={() => handleNotificationPress(item)}
             className={`flex-row items-center p-4 border-b border-gray-100 ${item.isRead ? 'bg-white' : 'bg-orange-50'}`}
         >
             <View className={`h-12 w-12 rounded-full items-center justify-center ${item.isRead ? 'bg-gray-100' : 'bg-orange-100'}`}>

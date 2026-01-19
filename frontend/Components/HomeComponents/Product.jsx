@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
+import { useRouter } from 'expo-router'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { COLORS } from '../../constant/theme'
@@ -7,6 +7,7 @@ import { useCart } from '../CartComponents/CartContext'
 import { resolveImageUrl } from '../utils/imageUrl'
 
 const Product = ({ product = {}, horizontal = false }) => {
+  const router = useRouter();
   const navigateToProductView = () => {
     const id = product._id || product.id;
     if (id) router.push(`/ProductView?id=${id}`)

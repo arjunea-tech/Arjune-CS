@@ -5,19 +5,31 @@ import { FlatList, ScrollView, Text, TextInput, TouchableOpacity, View, Alert } 
 import { THEME } from '../../Components/ui/theme';
 import api from '../../Components/api/config';
 import { useFocusEffect } from '@react-navigation/native';
+import { printOrdersReport } from '../../Components/utils/ReportUtils';
 
 export default function Orders() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const [activeTab, setActiveTab] = useState('All');
+    const [timeFilter, setTimeFilter] = useState('All Time');
     const [searchQuery, setSearchQuery] = useState('');
     const [orders, setOrders] = useState([]);
+
+    const timeFilters = ['All Time', 'Today', 'This Week', 'This Month'];
 
     useEffect(() => {
         if (params.search) {
             setSearchQuery(params.search);
         }
     }, [params.search]);
+
+    const handlePrint = async () => {
+        try {
+            await printOrdersReport(filteredOrders, `${activeTab} - ${timeFilter}`);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to generate report');
+        }
+    };
 
     const loadOrders = async () => {
         try {
@@ -29,8 +41,9 @@ export default function Orders() {
                     amount: `₹${o.totalPrice}`,
                     status: o.orderStatus,
                     date: new Date(o.createdAt).toLocaleDateString(),
+                    rawDate: new Date(o.createdAt),
                     items: o.orderItems.map(i => i.name).join(', ')
-                }));
+                })).sort((a, b) => b.rawDate - a.rawDate);
                 setOrders(mapped);
             }
         } catch (error) {
@@ -67,14 +80,30 @@ export default function Orders() {
     const tabs = ['All', 'Requested', 'Processing', 'Shipped', 'Delivered'];
 
     const filteredOrders = orders.filter(order => {
-        // Pending map to Processing
-        const statusMatch = activeTab === 'All' ||
-            order.status === activeTab;
+        // Status filter
+        const statusMatch = activeTab === 'All' || order.status === activeTab;
 
+        // Search filter
         const matchesSearch =
             order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.customer.toLowerCase().includes(searchQuery.toLowerCase());
-        return statusMatch && matchesSearch;
+
+        // Time filter
+        const now = new Date();
+        const orderDate = new Date(order.rawDate);
+        let timeMatch = true;
+
+        if (timeFilter === 'Today') {
+            timeMatch = orderDate.toDateString() === now.toDateString();
+        } else if (timeFilter === 'This Week') {
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            timeMatch = orderDate >= weekAgo;
+        } else if (timeFilter === 'This Month') {
+            timeMatch = orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+        }
+
+        return statusMatch && matchesSearch && timeMatch;
     });
 
     const getStatusColor = (status) => {
@@ -139,6 +168,9 @@ export default function Orders() {
                 <Text className="text-2xl font-bold" style={{ color: THEME.colors.primary }}>
                     Orders
                 </Text>
+                <TouchableOpacity onPress={handlePrint} className="ml-auto p-2">
+                    <Ionicons name="print-outline" size={24} color={THEME.colors.primary} />
+                </TouchableOpacity>
             </View>
 
             {/* Search */}
@@ -172,6 +204,21 @@ export default function Orders() {
                             >
                                 {tab}
                             </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            {/* Time Filter Tabs */}
+            <View className="bg-white pb-3 pt-1 border-b border-gray-50">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+                    {timeFilters.map(f => (
+                        <TouchableOpacity
+                            key={f}
+                            onPress={() => setTimeFilter(f)}
+                            className={`mr-2 rounded-full border px-4 py-1 ${timeFilter === f ? 'bg-orange-500 border-orange-500' : 'bg-gray-50 border-gray-100'}`}
+                        >
+                            <Text className={`text-xs font-semibold ${timeFilter === f ? 'text-white' : 'text-gray-500'}`}>{f}</Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>

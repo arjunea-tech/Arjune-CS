@@ -24,6 +24,7 @@ exports.getSchemes = async (req, res, next) => {
 // @access    Public
 exports.getScheme = async (req, res, next) => {
     try {
+        console.log(`[BACKEND DEBUG] Fetching scheme: ${req.params.id}`);
         const scheme = await ChitScheme.findById(req.params.id);
 
         if (!scheme) {
@@ -134,26 +135,54 @@ exports.getMySchemes = async (req, res, next) => {
 
         // Check for payment reminders
         const { createNotification } = require('../utils/notifications');
-        mySchemes.forEach(item => {
-            const { scheme, monthsPaid, payments } = item;
-            if (monthsPaid < scheme.durationMonths) {
-                const today = new Date();
-                const lastPaymentMonth = payments.length > 0
-                    ? Math.max(...payments.map(p => p.monthIndex))
-                    : -1;
+        const Notification = require('../models/Notification');
 
-                // If today is past the 10th and they haven't paid for the current target month
-                if (today.getDate() > 10 && lastPaymentMonth < monthsPaid) {
-                    createNotification(
-                        req.user.id,
-                        'Chit Payment Reminder ⏰',
-                        `It's time to pay your installment for ${scheme.name}. Keep your savings growing!`,
-                        'chit',
-                        { schemeId: scheme._id }
-                    );
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const startOfMonth = new Date(currentYear, currentMonth, 1);
+        const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+
+        // Use for...of for async/await compatibility
+        for (const item of mySchemes) {
+            const { scheme, monthsPaid, payments } = item;
+
+            if (monthsPaid < scheme.durationMonths) {
+                // 1. Check if they have already paid for the current target period
+                // We use monthIndex to track which month's payment it is.
+                // If they have paid N months, their next expected monthIndex is N.
+
+                // Calculate how many months SHOULD have been paid based on when they joined
+                // Month 0 is join month.
+                const enrollmentPayment = payments.find(p => p.monthIndex === 0);
+                if (!enrollmentPayment) continue;
+
+                const joinDate = new Date(enrollmentPayment.paymentDate);
+                const monthsSinceJoin = (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth());
+
+                // If they have paid fewer months than have passed since they joined, they are due.
+                // Or if it's the 1st of the month, they might be due for the new month.
+                if (monthsPaid <= monthsSinceJoin) {
+                    // 2. Check if we already sent a reminder THIS calendar month
+                    const existingReminder = await Notification.findOne({
+                        user: req.user.id,
+                        type: 'chit',
+                        'data.schemeId': scheme._id,
+                        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+                    });
+
+                    if (!existingReminder) {
+                        await createNotification(
+                            req.user.id,
+                            'Chit Payment Reminder ⏰',
+                            `It's time to pay your ₹${scheme.installmentAmount} installment for ${scheme.name}. Keep your savings growing!`,
+                            'chit',
+                            { schemeId: scheme._id }
+                        );
+                    }
                 }
             }
-        });
+        }
 
         res.status(200).json({
             success: true,
@@ -224,6 +253,7 @@ exports.payInstallment = async (req, res, next) => {
 // @access    Private/Admin
 exports.getSchemeParticipants = async (req, res, next) => {
     try {
+        console.log(`[BACKEND DEBUG] Fetching participants for scheme: ${req.params.id}`);
         const scheme = await ChitScheme.findById(req.params.id);
         if (!scheme) {
             return next(new ErrorResponse('Scheme not found', 404));
@@ -246,6 +276,9 @@ exports.getSchemeParticipants = async (req, res, next) => {
             if (p.status === 'Paid') {
                 participantsMap[userId].paidMonths += 1;
                 participantsMap[userId].totalPaid += p.amount;
+            } else if (p.status === 'Pending' && p.monthIndex === 0) {
+                // Mark as Pending Approval
+                participantsMap[userId].isPendingApproval = true;
             }
         });
 
@@ -255,7 +288,7 @@ exports.getSchemeParticipants = async (req, res, next) => {
             email: p.user.email,
             paidMonths: p.paidMonths,
             pending: scheme.durationMonths - p.paidMonths,
-            status: p.paidMonths >= 1 ? 'Active' : 'Joined' // Simplified
+            status: p.isPendingApproval ? 'Pending Approval' : (p.paidMonths >= 1 ? 'Active' : 'Joined') // Simplified
         }));
 
         res.status(200).json({
@@ -267,9 +300,67 @@ exports.getSchemeParticipants = async (req, res, next) => {
         next(err);
     }
 };
-// @desc      Request to join a chit scheme
-// @route     POST /api/v1/chit/request-join
-// @access    Private (User)
+// @desc      Record payment for a user (Admin)
+// @route     POST /api/v1/chit/admin/pay
+// @access    Private/Admin
+exports.recordUserPayment = async (req, res, next) => {
+    try {
+        console.log('Record Payment Request Body:', req.body);
+        const { schemeId, userId } = req.body;
+
+        const scheme = await ChitScheme.findById(schemeId);
+        if (!scheme) {
+            return next(new ErrorResponse('Scheme not found', 404));
+        }
+
+        // Find all existing payments for this user & scheme
+        const existingPayments = await ChitPayment.find({
+            user: userId,
+            scheme: schemeId,
+            status: 'Paid'
+        });
+
+        const nextMonthIndex = existingPayments.length;
+        console.log(`User ${userId} has ${nextMonthIndex} existing payments for scheme ${schemeId}`);
+
+        if (nextMonthIndex >= scheme.durationMonths) {
+            return next(new ErrorResponse('This user has already completed the scheme', 400));
+        }
+
+        const payment = await ChitPayment.create({
+            user: userId,
+            scheme: schemeId,
+            amount: scheme.installmentAmount,
+            monthIndex: nextMonthIndex,
+            status: 'Paid'
+        });
+
+        console.log('Payment created:', payment);
+
+        // Notify user about payment confirmation
+        try {
+            await createNotification(
+                userId,
+                'Chit Payment Recorded 📝',
+                `Admin has recorded your payment of ₹${scheme.installmentAmount} for ${scheme.name} (Month ${nextMonthIndex + 1}).`,
+                'chit',
+                { schemeId: scheme._id, paymentId: payment._id }
+            );
+        } catch (notifError) {
+            console.error('Notification failed:', notifError);
+            // Continue execution, don't fail the request
+        }
+
+        res.status(201).json({
+            success: true,
+            data: payment
+        });
+    } catch (err) {
+        console.error('Record Payment Error:', err);
+        next(err);
+    }
+};
+
 exports.requestJoin = async (req, res, next) => {
     try {
         const { schemeId, name, mobileNumber, address } = req.body;
@@ -300,14 +391,14 @@ exports.requestJoin = async (req, res, next) => {
             scheme: schemeId,
             amount: scheme.installmentAmount,
             monthIndex: 0,
-            status: 'Paid'
+            status: 'Pending' // Requires Admin Approval
         });
 
         // Notify Admins
         const { notifyAdmins } = require('../utils/notifications');
         await notifyAdmins(
-            'New Chit Enrollment! 🎊',
-            `Participant: ${participantName}\nMobile: ${participantMobile}\nAddress: ${participantAddress}\nScheme: ${scheme.name}`,
+            'New Chit Request! ⏳',
+            `Participant: ${participantName}\nMobile: ${participantMobile}\nAddress: ${participantAddress}\nScheme: ${scheme.name}\nStatus: Pending Approval`,
             'chit',
             {
                 schemeId: scheme._id,
@@ -319,8 +410,91 @@ exports.requestJoin = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'You have joined the scheme successfully!',
+            message: 'Your request has been sent for approval!',
             data: enrollment
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// @desc      Approve join request
+// @route     POST /api/v1/chit/admin/approve
+// @access    Private/Admin
+exports.approveJoinRequest = async (req, res, next) => {
+    try {
+        const { userId, schemeId } = req.body;
+
+        const enrollment = await ChitPayment.findOne({
+            user: userId,
+            scheme: schemeId,
+            monthIndex: 0,
+            status: 'Pending'
+        });
+
+        if (!enrollment) {
+            return next(new ErrorResponse('No pending request found for this user', 404));
+        }
+
+        enrollment.status = 'Paid';
+        await enrollment.save();
+
+        const scheme = await ChitScheme.findById(schemeId);
+
+        // Notify User
+        const { createNotification } = require('../utils/notifications');
+        createNotification(
+            userId,
+            'Chit Request Approved! ✅',
+            `Your request to join ${scheme.name} has been approved. Welcome aboard!`,
+            'chit',
+            { schemeId: scheme._id }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: enrollment
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// @desc      Reject join request
+// @route     POST /api/v1/chit/admin/reject
+// @access    Private/Admin
+exports.rejectJoinRequest = async (req, res, next) => {
+    try {
+        const { userId, schemeId } = req.body;
+
+        const enrollment = await ChitPayment.findOne({
+            user: userId,
+            scheme: schemeId,
+            monthIndex: 0,
+            status: 'Pending'
+        });
+
+        if (!enrollment) {
+            return next(new ErrorResponse('No pending request found for this user', 404));
+        }
+
+        await enrollment.deleteOne();
+
+        const scheme = await ChitScheme.findById(schemeId);
+
+        // Notify User
+        const { createNotification } = require('../utils/notifications');
+        createNotification(
+            userId,
+            'Chit Request Rejected ❌',
+            `Your request to join ${scheme.name} was not approved. catch admin for support`,
+            'chit',
+            { schemeId: scheme._id }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: {}
         });
     } catch (err) {
         next(err);

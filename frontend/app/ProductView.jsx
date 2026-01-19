@@ -14,6 +14,7 @@ import {
 import { THEME } from '../Components/ui/theme';
 import { productsAPI } from '../Components/api';
 import { resolveImageUrl } from '../Components/utils/imageUrl';
+import { useCart } from '../Components/CartComponents/CartContext';
 
 export default function ProductView() {
   const params = useLocalSearchParams();

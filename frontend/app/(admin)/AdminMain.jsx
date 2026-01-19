@@ -10,6 +10,7 @@ import { THEME } from '../../Components/ui/theme';
 import { useAuth } from '../../Components/utils/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../../Components/api/config';
+import { notificationsAPI } from '../../Components/api';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -18,6 +19,7 @@ export default function AdminMain() {
     const router = useRouter();
     const { logout, user } = useAuth();
     const [recentOrders, setRecentOrders] = useState([]);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [stats, setStats] = useState({
         totalSales: 0,
         totalOrders: 0,
@@ -126,6 +128,17 @@ export default function AdminMain() {
                 }));
 
                 setRecentOrders(recent);
+
+                // Fetch unread notifications count
+                const notifRes = await notificationsAPI.getNotifications();
+                // Since notificationsAPI returns the data directly if successful or throws
+                if (notifRes && Array.isArray(notifRes.data)) {
+                    const unread = notifRes.data.filter(n => !n.isRead).length;
+                    setUnreadNotifications(unread);
+                } else if (notifRes && Array.isArray(notifRes)) {
+                    const unread = notifRes.filter(n => !n.isRead).length;
+                    setUnreadNotifications(unread);
+                }
 
                 // Process chart data
                 processChartData(allOrders);
@@ -298,6 +311,7 @@ export default function AdminMain() {
         { icon: <Ionicons name="wallet" size={24} color="#FF6B00" />, label: 'Chit Fund', onPress: () => { router.push('/(admin)/ChitManagement') } },
         { icon: <Ionicons name="grid" size={24} color="#FF6B00" />, label: 'Categories', onPress: () => { router.push('/(admin)/Categories') } },
         { icon: <Ionicons name="images" size={24} color="#FF6B00" />, label: 'Banners', onPress: () => { router.push('/(admin)/BannerManagement') } },
+        { icon: <Ionicons name="notifications" size={24} color="#FF6B00" />, label: 'Notifications', onPress: () => { router.push('/Notifications') } },
     ]
 
     return (
@@ -311,9 +325,19 @@ export default function AdminMain() {
                         <Text className="text-xl font-bold">Admin</Text>
                         <Text className="text-xl font-bold" style={{ color: THEME.colors.primary }}>Panel</Text>
                     </View>
-                    <TouchableOpacity onPress={handleLogout} className="p-2">
-                        <Ionicons name="log-out-outline" size={24} color={THEME.colors.primary} />
-                    </TouchableOpacity>
+                    <View className="flex-row items-center gap-2">
+                        <TouchableOpacity onPress={() => router.push('/Notifications')} className="p-2 relative">
+                            <Ionicons name="notifications-outline" size={24} color={THEME.colors.primary} />
+                            {unreadNotifications > 0 && (
+                                <View className="absolute top-2 right-2 bg-red-500 rounded-full h-4 w-4 items-center justify-center border border-white">
+                                    <Text className="text-white text-[8px] font-bold">{unreadNotifications}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleLogout} className="p-2">
+                            <Ionicons name="log-out-outline" size={24} color={THEME.colors.primary} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Good Morning Box */}

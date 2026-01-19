@@ -33,12 +33,21 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
         const createdOrder = await order.save();
 
         // Notify Admins about new order request
-        const { notifyAdmins } = require('../utils/notifications');
+        const { notifyAdmins, createNotification } = require('../utils/notifications');
         await notifyAdmins(
             'New Order Request! 🛒',
             `Customer: ${req.user.name}\nMobile: ${req.user.mobileNumber}\nAddress: ${shippingAddress}\nTotal: ₹${totalPrice}`,
             'order',
             { orderId: createdOrder._id, userId: req.user._id }
+        );
+
+        // Notify User about successful order placement
+        await createNotification(
+            req.user._id,
+            'Order Placed Successfully! 🎉',
+            `Your order #${createdOrder._id.toString().slice(-6).toUpperCase()} for ₹${totalPrice} has been placed. We will process it shortly!`,
+            'order',
+            { orderId: createdOrder._id }
         );
 
         res.status(201).json({

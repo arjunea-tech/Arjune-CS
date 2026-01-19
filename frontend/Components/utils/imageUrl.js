@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const SERVER_IP = '192.168.1.38'; // Match config.js
+const SERVER_IP = '192.168.1.34'; // Match config.js
 const BASE_URL = `http://${SERVER_IP}:5000`;
 
 /**

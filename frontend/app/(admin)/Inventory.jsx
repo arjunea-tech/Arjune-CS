@@ -15,6 +15,7 @@ import { THEME } from '../../Components/ui/theme';
 import { productsAPI } from '../../Components/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { resolveImageUrl } from '../../Components/utils/imageUrl';
+import { printInventoryReport } from '../../Components/utils/ReportUtils';
 
 export default function Inventory() {
     const router = useRouter();
@@ -25,6 +26,22 @@ export default function Inventory() {
     const [loading, setLoading] = useState(true);
 
     const filters = ['All Items', 'Diwali Specials 🔥', 'Low Stock', 'Out of Stock'];
+
+    const handlePrint = async () => {
+        try {
+            // Group filtered products by category
+            const grouped = filteredProducts.reduce((acc, p) => {
+                const catName = p.category?.name || 'Uncategorized';
+                if (!acc[catName]) acc[catName] = [];
+                acc[catName].push(p);
+                return acc;
+            }, {});
+
+            await printInventoryReport(grouped);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const fetchProducts = async () => {
         try {
@@ -178,6 +195,9 @@ export default function Inventory() {
                 <Text className="text-2xl font-bold" style={{ color: THEME.colors.primary }}>
                     Inventory
                 </Text>
+                <TouchableOpacity onPress={handlePrint} className="ml-auto p-2">
+                    <Ionicons name="print-outline" size={24} color={THEME.colors.primary} />
+                </TouchableOpacity>
             </View>
 
             {/* Search */}

@@ -8,7 +8,10 @@ const {
     getMySchemes,
     payInstallment,
     getSchemeParticipants,
-    requestJoin
+    requestJoin,
+    recordUserPayment,
+    approveJoinRequest,
+    rejectJoinRequest
 } = require('../controllers/chit');
 
 const router = express.Router();
@@ -29,5 +32,8 @@ router.post('/schemes', protect, authorize('admin'), createScheme);
 router.put('/schemes/:id', protect, authorize('admin'), updateScheme);
 router.get('/schemes/:id/participants', protect, authorize('admin'), getSchemeParticipants);
 router.delete('/schemes/:id', protect, authorize('admin'), deleteScheme);
+router.post('/admin/pay', protect, authorize('admin'), recordUserPayment);
+router.post('/admin/approve', protect, authorize('admin'), approveJoinRequest);
+router.post('/admin/reject', protect, authorize('admin'), rejectJoinRequest);
 
 module.exports = router;

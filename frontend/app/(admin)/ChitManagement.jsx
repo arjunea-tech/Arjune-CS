@@ -5,10 +5,19 @@ import { FlatList, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
 import api from '../../Components/api/config';
 import { useFocusEffect } from '@react-navigation/native';
+import { printChitSchemesReport } from '../../Components/utils/ReportUtils';
 
 export default function ChitManagement() {
     const router = useRouter();
     const [chits, setChits] = useState([]);
+
+    const handlePrint = async () => {
+        try {
+            await printChitSchemesReport(chits);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const fetchSchemes = async () => {
         try {
@@ -29,7 +38,7 @@ export default function ChitManagement() {
 
     const renderChitItem = ({ item }) => (
         <TouchableOpacity
-            onPress={() => router.push({ pathname: '/(admin)/ChitDetails', params: { id: item._id } })}
+            onPress={() => router.push(`/(admin)/ChitDetails?id=${item._id}`)}
             className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
             <View className="flex-row justify-between items-start mb-3">
@@ -75,6 +84,9 @@ export default function ChitManagement() {
                 <Text className="text-2xl font-bold" style={{ color: THEME.colors.primary }}>
                     Chit Schemes
                 </Text>
+                <TouchableOpacity onPress={handlePrint} className="ml-auto p-2">
+                    <Ionicons name="print-outline" size={24} color={THEME.colors.primary} />
+                </TouchableOpacity>
             </View>
 
             <FlatList
