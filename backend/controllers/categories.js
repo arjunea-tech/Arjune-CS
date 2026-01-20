@@ -33,16 +33,19 @@ exports.getCategory = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/categories
 // @access  Private/Admin
 exports.createCategory = asyncHandler(async (req, res, next) => {
+    const { name, description, status } = req.body;
+    const createData = { name, description, status };
+
     // Add image path if file uploaded
     if (req.file) {
         let image = req.file.path;
         if (!image.startsWith('http')) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
-        req.body.image = image;
+        createData.image = image;
     }
 
-    const category = await Category.create(req.body);
+    const category = await Category.create(createData);
 
     res.status(201).json({
         success: true,
@@ -60,16 +63,22 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
         return res.status(404).json({ success: false, error: 'Category not found' });
     }
 
+    const { name, description, status } = req.body;
+    const updateData = { name, description, status };
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     // Update image if new one uploaded
     if (req.file) {
         let image = req.file.path;
         if (!image.startsWith('http')) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
-        req.body.image = image;
+        updateData.image = image;
     }
 
-    category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    category = await Category.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
     });

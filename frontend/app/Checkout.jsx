@@ -40,7 +40,7 @@ export default function Checkout() {
 
       const orderData = {
         orderItems,
-        shippingAddress: address,
+        shippingAddress: `${address}\nPhone: ${user?.mobileNumber || ''}`,
         paymentMethod: 'Requested',
         itemsPrice: totals.subtotal,
         taxPrice: 0, // Calculate tax if needed

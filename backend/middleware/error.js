@@ -19,13 +19,15 @@ const errorHandler = (err, req, res, next) => {
 
     // Mongoose validation error
     if (err.name === 'ValidationError') {
+        console.error('[ValidationError Details]:', JSON.stringify(err.errors, null, 2));
         const message = Object.values(err.errors).map(val => val.message).join(', ');
         error = { message, statusCode: 400 };
     }
 
     res.status(error.statusCode || 500).json({
         success: false,
-        error: error.message || 'Server Error'
+        error: error.message || 'Server Error',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 };
 

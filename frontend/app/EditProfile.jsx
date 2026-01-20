@@ -71,8 +71,11 @@ export default function EditProfile() {
       return;
     }
 
+    // Fallback logic
+    const mediaTypes = ImagePicker.MediaType ? ImagePicker.MediaType.Images : ImagePicker.MediaTypeOptions.Images;
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: mediaTypes,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,

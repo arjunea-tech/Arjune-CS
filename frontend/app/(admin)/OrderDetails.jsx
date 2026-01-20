@@ -34,11 +34,14 @@ export default function OrderDetails() {
         date: new Date(o.createdAt).toLocaleString(),
         status: o.orderStatus,
         customer: {
-            name: o.user?.name || 'Guest',
+            name: o.user?.name || o.orderItems?.[0]?.name?.split(' ')?.[0] || 'Guest', // Extreme fallback for name
             email: o.user?.email || 'N/A',
-            phone: o.shippingAddress?.phone || 'N/A' // Assuming shippingAddress has phone
+            phone: o.user?.mobileNumber || o.user?.phone || o.user?.mobile ||
+                (o.shippingAddress?.match(/\d{10}/)?.[0]) || 'N/A' // Try regex for phone
         },
-        address: o.shippingAddress, // Assuming string or object with toString? shippingAddress in model is String.
+        address: o.shippingAddress ||
+            (o.user?.address ? `${o.user.address}, ${o.user.district}, ${o.user.state} - ${o.user.pincode}` : null) ||
+            o.shippingInfo?.address || 'N/A',
         items: o.orderItems.map(i => ({
             name: i.name,
             qty: i.qty,
@@ -69,13 +72,13 @@ export default function OrderDetails() {
 
     if (!order) return <View className="flex-1 items-center justify-center"><Text>Loading...</Text></View>;
 
-    const steps = ['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const steps = ['Requested', 'Processing', 'Shipped', 'Cancelled'];
     // Backend uses 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'. 'Pending' might be mapped to 'Processing' or we align UI.
     // UI steps: ['Pending', 'Processing', 'Shipped', 'Delivered'] in previous code.
     // Let's align with backend enum: Processing, Shipped, Out for Delivery, Delivered.
 
     const isStepCompleted = (stepName) => {
-        const statusOrder = ['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+        const statusOrder = ['Requested', 'Processing', 'Shipped'];
         const currentIndex = statusOrder.indexOf(order.status);
         const stepIndex = statusOrder.indexOf(stepName);
         return stepIndex <= currentIndex;
@@ -126,12 +129,12 @@ export default function OrderDetails() {
                 {/* Tracking Step */}
                 <View className="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-100">
                     <Text className="text-sm font-bold text-gray-500 uppercase mb-4">Order Status</Text>
-                    {['Requested', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'].map((step, index) => (
+                    {['Requested', 'Processing', 'Shipped'].map((step, index) => (
                         <StatusStep
                             key={step}
                             label={step}
                             isCompleted={isStepCompleted(step)}
-                            isLast={index === 4}
+                            isLast={index === 2}
                         />
                     ))}
                 </View>
@@ -201,12 +204,18 @@ export default function OrderDetails() {
 
             {/* Bottom Actions */}
             <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-100">
-                <TouchableOpacity
-                    onPress={() => setModalVisible(true)}
-                    className="w-full py-4 rounded-xl bg-orange-500 items-center justify-center shadow-lg"
-                >
-                    <Text className="font-bold text-white text-lg">Update Status</Text>
-                </TouchableOpacity>
+                {['Shipped', 'Delivered', 'Cancelled'].includes(order.status) ? (
+                    <View className="w-full py-4 rounded-xl bg-gray-300 items-center justify-center">
+                        <Text className="font-bold text-gray-500 text-lg">Order Locked: {order.status}</Text>
+                    </View>
+                ) : (
+                    <TouchableOpacity
+                        onPress={() => setModalVisible(true)}
+                        className="w-full py-4 rounded-xl bg-orange-500 items-center justify-center shadow-lg"
+                    >
+                        <Text className="font-bold text-white text-lg">Update Status</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Status Update Modal */}

@@ -51,7 +51,7 @@ function CartInner() {
         ) : (
           <>
             {cartItems.map((it) => (
-              <CartItem key={it.product.id} item={it} />
+              <CartItem key={it.product._id || it.product.id} item={it} />
             ))}
 
             <Card style={styles.summaryCard}>

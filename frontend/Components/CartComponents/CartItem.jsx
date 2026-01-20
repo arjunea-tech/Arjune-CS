@@ -31,15 +31,15 @@ export default function CartItem({ item }) {
 
         <View style={styles.right}>
           <View style={styles.qtyRow}>
-            <TouchableOpacity accessibilityLabel="Decrease quantity" onPress={() => setQuantity(product.id, Math.max(0, quantity - 1))} style={styles.qtyBtn}>
+            <TouchableOpacity accessibilityLabel="Decrease quantity" onPress={() => setQuantity(product._id || product.id, Math.max(0, quantity - 1))} style={styles.qtyBtn}>
               <Text style={styles.qtyText}>-</Text>
             </TouchableOpacity>
             <Text style={styles.qty}>{quantity}</Text>
-            <TouchableOpacity accessibilityLabel="Increase quantity" onPress={() => setQuantity(product.id, quantity + 1)} style={styles.qtyBtn}>
+            <TouchableOpacity accessibilityLabel="Increase quantity" onPress={() => setQuantity(product._id || product.id, quantity + 1)} style={styles.qtyBtn}>
               <Text style={styles.qtyText}>+</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity accessibilityLabel="Remove item" onPress={() => removeItem(product.id)} style={styles.removeBtn}>
+          <TouchableOpacity accessibilityLabel="Remove item" onPress={() => removeItem(product._id || product.id)} style={styles.removeBtn}>
             <Ionicons name="trash-outline" size={18} color="#333" />
           </TouchableOpacity>
         </View>

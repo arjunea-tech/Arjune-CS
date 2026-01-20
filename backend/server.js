@@ -24,7 +24,8 @@ const chit = require('./routes/chit');
 const notifications = require('./routes/notifications');
 
 // Body parser
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Enable CORS
 app.use(cors());

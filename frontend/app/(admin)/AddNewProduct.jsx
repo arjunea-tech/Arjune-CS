@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
 import { Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { THEME } from '../../Components/ui/theme';
@@ -20,18 +20,22 @@ export default function AddNewProduct() {
     const [discountPrice, setDiscountPrice] = useState('');
     const [stock, setStock] = useState('');
     const [description, setDescription] = useState('');
+    const [pack, setPack] = useState('');
+    const [videoUrl, setVideoUrl] = useState('');
     const [isFeatured, setIsFeatured] = useState(false);
     const [isDiwaliSpecial, setIsDiwaliSpecial] = useState(false);
 
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchCategories();
-        if (isEditMode) {
-            fetchProductDetails();
-        }
-    }, [isEditMode, params.editId]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchCategories();
+            if (isEditMode) {
+                fetchProductDetails();
+            }
+        }, [isEditMode, params.editId])
+    );
 
     const fetchCategories = async () => {
         try {
@@ -66,6 +70,8 @@ export default function AddNewProduct() {
                 }
 
                 setStock(String(p.quantity || '0'));
+                setPack(p.pack || '');
+                setVideoUrl(p.videoUrl || '');
                 setDescription(p.description || '');
                 setIsFeatured(p.isFeatured || false);
                 setIsDiwaliSpecial(p.isDiwaliSpecial || false);
@@ -82,8 +88,11 @@ export default function AddNewProduct() {
     };
 
     const pickImage = async () => {
+        // Fallback for deprecation: Use MediaType if available, otherwise MediaTypeOptions
+        const mediaTypes = ImagePicker.MediaType ? ImagePicker.MediaType.Images : ImagePicker.MediaTypeOptions.Images;
+
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: mediaTypes,
             allowsMultipleSelection: true,
             quality: 1,
         });
@@ -109,38 +118,46 @@ export default function AddNewProduct() {
         try {
             setLoading(true);
             const formData = new FormData();
-            formData.append('name', name);
+            formData.append('name', name.trim());
             formData.append('price', price);
-            formData.append('discountPrice', discountPrice);
+            if (discountPrice) {
+                formData.append('discountPrice', discountPrice);
+            }
             formData.append('quantity', stock);
-            formData.append('description', description);
+            if (pack) formData.append('pack', pack);
+            if (videoUrl) formData.append('videoUrl', videoUrl);
+            formData.append('description', description.trim());
             formData.append('category', category); // category ID
-            formData.append('isFeatured', isFeatured);
-            formData.append('isDiwaliSpecial', isDiwaliSpecial);
+            formData.append('isFeatured', String(isFeatured));
+            formData.append('isDiwaliSpecial', String(isDiwaliSpecial));
+
+            console.log('[handleSave] Preparing to send product data...');
+            // Note: You can't directly log FormData contents easily in some environments,
+            // but we can log the state variables.
+            console.log('[handleSave] State:', { name, price, discountPrice, stock, category, isFeatured, isDiwaliSpecial });
 
             // Append images
             images.forEach((img, index) => {
                 if (!img.startsWith('http')) {
-                    const filename = img.split('/').pop();
+                    const filename = img.split('/').pop().split('?')[0]; // Remove query params if any
                     const match = /\.(\w+)$/.exec(filename);
-                    const type = match ? `image/${match[1]}` : `image`;
-                    // Using 'images' as the field name to match backend upload.array('images')
+                    const type = match ? `image/${match[1]}` : `image/jpeg`;
                     formData.append('images', { uri: img, name: filename, type });
                 } else {
-                    // We can track existing images too if needed, but the backend 
-                    // controller currently replaces the whole array if images are uploaded.
-                    // To support partial updates, we'd need more logic. 
-                    // For now, let's just send the URL as a string.
                     formData.append('existingImages', img);
                 }
             });
 
             let res;
             if (isEditMode) {
+                console.log('[handleSave] Updating existing product:', params.editId);
                 res = await productsAPI.updateProduct(params.editId, formData);
             } else {
+                console.log('[handleSave] Creating new product');
                 res = await productsAPI.createProduct(formData);
             }
+
+            console.log('[handleSave] Response:', res);
 
             if (res.success) {
                 Alert.alert("Success", isEditMode ? 'Product Updated Successfully!' : 'Product Added Successfully!');
@@ -148,8 +165,17 @@ export default function AddNewProduct() {
             }
 
         } catch (error) {
-            const msg = error.response?.data?.error || error.message || "Failed to save product";
-            Alert.alert("Error", msg);
+            console.error('[handleSave] Error:', error);
+            let msg = "Failed to save product";
+
+            if (error.response) {
+                console.error('[handleSave] Error Data:', JSON.stringify(error.response.data, null, 2));
+                msg = error.response.data.error || JSON.stringify(error.response.data);
+            } else {
+                msg = error.message;
+            }
+
+            Alert.alert("Save Failed", msg.substring(0, 500)); // Show up to 500 chars in alert
         } finally {
             setLoading(false);
         }
@@ -273,15 +299,39 @@ export default function AddNewProduct() {
                         </View>
                     </View>
 
-                    {/* Stock Qty */}
+                    {/* Stock Qty & Pack */}
+                    <View className="flex-row space-x-4 gap-4">
+                        <View className="flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Stock Qty</Text>
+                            <TextInput
+                                placeholder="0"
+                                value={stock}
+                                onChangeText={setStock}
+                                keyboardType="numeric"
+                                className="bg-gray-50 p-3 rounded-lg text-gray-800"
+                            />
+                        </View>
+
+                        <View className="flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Pack</Text>
+                            <TextInput
+                                placeholder="e.g. 5 Pcs/Box"
+                                value={pack}
+                                onChangeText={setPack}
+                                className="bg-gray-50 p-3 rounded-lg text-gray-800"
+                            />
+                        </View>
+                    </View>
+
+                    {/* Video URL */}
                     <View className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Stock Qty</Text>
+                        <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Youtube Video URL</Text>
                         <TextInput
-                            placeholder="0"
-                            value={stock}
-                            onChangeText={setStock}
-                            keyboardType="numeric"
+                            placeholder="https://youtube.com/..."
+                            value={videoUrl}
+                            onChangeText={setVideoUrl}
                             className="bg-gray-50 p-3 rounded-lg text-gray-800"
+                            autoCapitalize="none"
                         />
                     </View>
 

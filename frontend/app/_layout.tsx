@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CartProvider } from "../Components/CartComponents/CartContext";
 import { AuthProvider, useAuth } from "../Components/utils/AuthContext";
+import { NotificationProvider } from "../Components/utils/NotificationContext";
 import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 
@@ -61,7 +62,9 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <AuthProvider>
         <CartProvider>
-          <ProtectedLayout />
+          <NotificationProvider>
+            <ProtectedLayout />
+          </NotificationProvider>
         </CartProvider>
       </AuthProvider>
     </SafeAreaView>

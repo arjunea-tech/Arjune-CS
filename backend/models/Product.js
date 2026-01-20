@@ -52,6 +52,9 @@ const ProductSchema = new mongoose.Schema({
     pack: {
         type: String
     },
+    videoUrl: {
+        type: String
+    },
     status: {
         type: String,
         enum: ['Active', 'Inactive', 'Out of Stock'],

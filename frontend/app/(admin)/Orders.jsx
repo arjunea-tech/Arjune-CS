@@ -40,6 +40,9 @@ export default function Orders() {
                     customer: o.user?.name || 'Guest',
                     amount: `₹${o.totalPrice}`,
                     status: o.orderStatus,
+                    phone: o.user?.mobileNumber || o.user?.phone || o.user?.mobile ||
+                        (o.shippingAddress?.replace(/[^0-9]/g, '').match(/\d{10}/)?.[0]) || 'N/A',
+                    shippingAddress: o.shippingAddress,
                     date: new Date(o.createdAt).toLocaleDateString(),
                     rawDate: new Date(o.createdAt),
                     items: o.orderItems.map(i => i.name).join(', ')
@@ -60,11 +63,9 @@ export default function Orders() {
 
     const handleUpdateStatus = async (id, currentStatus) => {
         const nextStatus = currentStatus === 'Requested' ? 'Processing' :
-            currentStatus === 'Processing' ? 'Shipped' :
-                currentStatus === 'Shipped' ? 'Out for Delivery' :
-                    currentStatus === 'Out for Delivery' ? 'Delivered' : 'Delivered';
+            currentStatus === 'Processing' ? 'Shipped' : 'Shipped';
 
-        if (nextStatus === currentStatus) return; // Already delivered
+        if (nextStatus === currentStatus) return;
 
         try {
             const res = await api.put(`/orders/${id}/status`, { status: nextStatus });
@@ -77,7 +78,7 @@ export default function Orders() {
         }
     };
 
-    const tabs = ['All', 'Requested', 'Processing', 'Shipped', 'Delivered'];
+    const tabs = ['All', 'Requested', 'Processing', 'Shipped'];
 
     const filteredOrders = orders.filter(order => {
         // Status filter
@@ -110,9 +111,7 @@ export default function Orders() {
         switch (status) {
             case 'Requested': return 'bg-red-100 text-red-700';
             case 'Processing': return 'bg-orange-100 text-orange-700';
-            case 'Shipped': return 'bg-blue-100 text-blue-700';
-            case 'Out for Delivery': return 'bg-purple-100 text-purple-700';
-            case 'Delivered': return 'bg-green-100 text-green-700';
+            case 'Shipped': return 'bg-green-100 text-green-700';
             default: return 'bg-gray-100 text-gray-700';
         }
     };
@@ -134,6 +133,7 @@ export default function Orders() {
             <View className="flex-row items-center justify-between">
                 <View className="flex-1 mr-4">
                     <Text className="text-sm font-bold text-gray-700">{item.customer}</Text>
+                    <Text className="text-xs text-orange-600 font-medium">{item.phone}</Text>
                     <Text className="text-xs text-gray-400" numberOfLines={1}>{item.items}</Text>
                 </View>
                 <View>

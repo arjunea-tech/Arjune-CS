@@ -1,6 +1,7 @@
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 // @desc    Create new order
 // @route   POST /api/v1/orders
@@ -32,6 +33,8 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
 
         const createdOrder = await order.save();
 
+
+
         // Notify Admins about new order request
         const { notifyAdmins, createNotification } = require('../utils/notifications');
         await notifyAdmins(
@@ -61,7 +64,7 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/orders/:id
 // @access  Private
 exports.getOrderById = asyncHandler(async (req, res, next) => {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.params.id).populate('user');
 
     if (!order) {
         return next(new ErrorResponse('Order not found', 404));
@@ -77,7 +80,7 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/orders/myorders
 // @access  Private
 exports.getMyOrders = asyncHandler(async (req, res, next) => {
-    const orders = await Order.find({ user: req.user._id });
+    const orders = await Order.find({ user: req.user._id }).populate('user');
 
     res.status(200).json({
         success: true,
@@ -90,7 +93,7 @@ exports.getMyOrders = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/orders
 // @access  Private/Admin
 exports.getOrders = asyncHandler(async (req, res, next) => {
-    const orders = await Order.find({}).populate('user', 'id name');
+    const orders = await Order.find({}).populate('user');
 
     res.status(200).json({
         success: true,
@@ -109,9 +112,41 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Order not found', 404));
     }
 
-    order.orderStatus = req.body.status || order.orderStatus;
+    // Check valid transitions
+    if (order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered' || order.orderStatus === 'Cancelled') {
+        return next(new ErrorResponse(`You cannot change order status after it is ${order.orderStatus}`, 400));
+    }
 
-    if (req.body.status === 'Delivered') {
+    const nextStatus = req.body.status;
+
+    // Stock Management: Reduce stock only when moving to 'Processing' (first time)
+    // We assume 'Requested' -> 'Processing' implies confirmation.
+    if (nextStatus === 'Processing' && order.orderStatus !== 'Processing') {
+        for (const item of order.orderItems) {
+            console.log(`[Order Status] Reducing stock for Product ID: ${item.product} by Quantity: ${item.qty}`);
+            try {
+                const product = await Product.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { quantity: -Number(item.qty) } },
+                    { new: true }
+                );
+
+                if (product && product.quantity <= 0) {
+                    await Product.findByIdAndUpdate(item.product, {
+                        quantity: 0,
+                        status: 'Out of Stock'
+                    });
+                }
+            } catch (err) {
+                console.error(`[Order Status] Failed to update stock for Product ${item.product}:`, err.message);
+            }
+        }
+    }
+
+    // Status Update
+    order.orderStatus = nextStatus || order.orderStatus;
+
+    if (nextStatus === 'Delivered') {
         order.isDelivered = true;
         order.deliveredAt = Date.now();
     }

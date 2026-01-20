@@ -25,8 +25,8 @@ const HTML_STYLE = `
 `;
 
 export const generateReport = async (title, contentHTML) => {
-    const dateStr = new Date().toLocaleString();
-    const html = `
+  const dateStr = new Date().toLocaleString();
+  const html = `
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
@@ -49,48 +49,53 @@ export const generateReport = async (title, contentHTML) => {
     </html>
   `;
 
-    try {
-        const { uri } = await Print.printToFileAsync({ html });
-        if (Platform.OS === 'ios') {
-            await Sharing.shareAsync(uri);
-        } else {
-            await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-        }
-    } catch (error) {
-        console.error('Error generating report:', error);
-        throw error;
+  try {
+    const { uri } = await Print.printToFileAsync({ html });
+    if (Platform.OS === 'ios') {
+      await Sharing.shareAsync(uri);
+    } else {
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
     }
+  } catch (error) {
+    console.error('Error generating report:', error);
+    throw error;
+  }
 };
 
 /**
  * Orders Report
  */
 export const printOrdersReport = async (orders, periodLabel = 'All Time') => {
-    let tableRows = '';
-    let totalAmount = 0;
+  let tableRows = '';
+  let totalAmount = 0;
 
-    orders.forEach(order => {
-        const price = parseFloat(order.amount?.replace(/[^0-9.]/g, '') || 0);
-        totalAmount += price;
+  orders.forEach(order => {
+    const price = parseFloat(order.amount?.replace(/[^0-9.]/g, '') || 0);
+    totalAmount += price;
 
-        tableRows += `
+    const phone = order.phone && order.phone !== 'N/A' ? order.phone :
+      (order.shippingAddress?.replace(/[^0-9]/g, '').match(/\d{10}/)?.[0]) || 'N/A';
+
+    tableRows += `
       <tr>
         <td>#${order.id?.substring(order.id.length - 6).toUpperCase()}</td>
         <td>${order.customer}</td>
+        <td>${phone}</td>
         <td>${order.date}</td>
         <td><span class="status">${order.status}</span></td>
         <td style="text-align: right;">${order.amount}</td>
       </tr>
     `;
-    });
+  });
 
-    const content = `
+  const content = `
     <h3>Order Report - ${periodLabel}</h3>
     <table>
       <thead>
         <tr>
           <th>Order ID</th>
           <th>Customer</th>
+          <th>Phone</th>
           <th>Date</th>
           <th>Status</th>
           <th style="text-align: right;">Amount</th>
@@ -99,42 +104,42 @@ export const printOrdersReport = async (orders, periodLabel = 'All Time') => {
       <tbody>
         ${tableRows}
         <tr class="total-row">
-          <td colspan="4" style="text-align: right;">Total Sales:</td>
+          <td colspan="5" style="text-align: right;">Total Sales:</td>
           <td style="text-align: right;">₹${totalAmount.toLocaleString()}</td>
         </tr>
       </tbody>
     </table>
   `;
 
-    await generateReport(`Orders Report (${periodLabel})`, content);
+  await generateReport(`Orders Report (${periodLabel})`, content);
 };
 
 /**
  * Inventory Report
  */
 export const printInventoryReport = async (productsByCat) => {
-    let sections = '';
+  let sections = '';
 
-    Object.keys(productsByCat).forEach(cat => {
-        let rows = '';
-        productsByCat[cat].forEach(p => {
-            rows += `
+  Object.keys(productsByCat).forEach(cat => {
+    let rows = '';
+    productsByCat[cat].forEach(p => {
+      rows += `
         <tr>
           <td>${p.name}</td>
-          <td>${p.stock || 'N/A'}</td>
+          <td>${p.quantity || 0}</td>
           <td style="text-align: right;">₹${p.price}</td>
           <td style="text-align: right;">₹${p.discountPrice || '-'}</td>
         </tr>
       `;
-        });
+    });
 
-        sections += `
+    sections += `
       <h3>Category: ${cat}</h3>
       <table>
         <thead>
           <tr>
             <th>Product Name</th>
-            <th>Stock</th>
+            <th>Quantity</th>
             <th style="text-align: right;">Price</th>
             <th style="text-align: right;">Discount</th>
           </tr>
@@ -144,18 +149,18 @@ export const printInventoryReport = async (productsByCat) => {
         </tbody>
       </table>
     `;
-    });
+  });
 
-    await generateReport('Inventory Report (Category Wise)', sections);
+  await generateReport('Inventory Report (Category Wise)', sections);
 };
 
 /**
  * Chit Schemes Report
  */
 export const printChitSchemesReport = async (chits) => {
-    let rows = '';
-    chits.forEach(chit => {
-        rows += `
+  let rows = '';
+  chits.forEach(chit => {
+    rows += `
       <tr>
         <td>${chit.name}</td>
         <td>₹${chit.totalAmount}</td>
@@ -164,9 +169,9 @@ export const printChitSchemesReport = async (chits) => {
         <td>Active</td>
       </tr>
     `;
-    });
+  });
 
-    const content = `
+  const content = `
     <h3>Chit Fund Schemes Overview</h3>
     <table>
       <thead>
@@ -184,16 +189,16 @@ export const printChitSchemesReport = async (chits) => {
     </table>
   `;
 
-    await generateReport('Chit Fund Schemes Summary', content);
+  await generateReport('Chit Fund Schemes Summary', content);
 };
 
 /**
  * Specific Chit Detail Report
  */
 export const printChitDetailReport = async (schemeName, participants) => {
-    let rows = '';
-    participants.forEach(p => {
-        rows += `
+  let rows = '';
+  participants.forEach(p => {
+    rows += `
       <tr>
         <td>${p.name}</td>
         <td>${p.email}</td>
@@ -202,9 +207,9 @@ export const printChitDetailReport = async (schemeName, participants) => {
         <td><span class="status status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span></td>
       </tr>
     `;
-    });
+  });
 
-    const content = `
+  const content = `
     <h3>Scheme: ${schemeName}</h3>
     <h4>Participant List & Progress</h4>
     <table>
@@ -223,5 +228,5 @@ export const printChitDetailReport = async (schemeName, participants) => {
     </table>
   `;
 
-    await generateReport(`Chit Detail Report: ${schemeName}`, content);
+  await generateReport(`Chit Detail Report: ${schemeName}`, content);
 };

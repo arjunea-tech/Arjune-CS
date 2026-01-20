@@ -307,11 +307,10 @@ export default function AdminMain() {
     const quickActionItems = [
         { icon: <Ionicons name="cart" size={24} color="#FF6B00" />, label: 'Products', onPress: () => { router.push('/(admin)/Inventory') } },
         { icon: <Ionicons name="person" size={24} color="#FF6B00" />, label: 'Users', onPress: () => { router.push('/(admin)/Users') } },
-        { icon: <Ionicons name="settings" size={24} color="#FF6B00" />, label: 'Settings', onPress: () => { router.push('/(admin)/Settings') } },
         { icon: <Ionicons name="wallet" size={24} color="#FF6B00" />, label: 'Chit Fund', onPress: () => { router.push('/(admin)/ChitManagement') } },
         { icon: <Ionicons name="grid" size={24} color="#FF6B00" />, label: 'Categories', onPress: () => { router.push('/(admin)/Categories') } },
         { icon: <Ionicons name="images" size={24} color="#FF6B00" />, label: 'Banners', onPress: () => { router.push('/(admin)/BannerManagement') } },
-        { icon: <Ionicons name="notifications" size={24} color="#FF6B00" />, label: 'Notifications', onPress: () => { router.push('/Notifications') } },
+        { icon: <Ionicons name="list" size={24} color="#FF6B00" />, label: 'Orders', onPress: () => { router.push('/(admin)/Orders') } },
     ]
 
     return (
@@ -334,8 +333,9 @@ export default function AdminMain() {
                                 </View>
                             )}
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handleLogout} className="p-2">
-                            <Ionicons name="log-out-outline" size={24} color={THEME.colors.primary} />
+                        <TouchableOpacity onPress={() => router.push('/(admin)/Settings')} className="p-2 flex-row items-center">
+                            <Ionicons name="settings-outline" size={22} color={THEME.colors.primary} />
+                            <Text className="ml-1 font-bold" style={{ color: THEME.colors.primary }}>Settings</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

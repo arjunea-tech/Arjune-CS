@@ -36,8 +36,12 @@ export function CartProvider({ children }) {
   }, []);
 
   const setQuantity = React.useCallback((productId, quantity) => {
-    setCartItems(prev => prev.map(i => String(i.product._id || i.product.id) === String(productId) ? { ...i, quantity: Math.max(0, quantity) } : i));
-  }, []);
+    if (quantity <= 0) {
+      removeItem(productId);
+    } else {
+      setCartItems(prev => prev.map(i => String(i.product._id || i.product.id) === String(productId) ? { ...i, quantity } : i));
+    }
+  }, [removeItem]);
 
   const clearCart = React.useCallback(() => setCartItems([]), []);
 

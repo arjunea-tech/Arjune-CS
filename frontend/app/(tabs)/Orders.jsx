@@ -48,9 +48,8 @@ export default function Orders() {
     const status = backendOrder.orderStatus;
     const steps = [
       { key: 'requested', label: 'Requested', date: backendOrder.createdAt?.substring(0, 10), done: true },
-      { key: 'placed', label: 'Order confirmed', date: '', done: ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
-      { key: 'shipped', label: 'Shipped', date: '', done: ['Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
-      { key: 'delivered', label: 'Delivered', date: backendOrder.deliveredAt?.substring(0, 10), done: status === 'Delivered' }
+      { key: 'processing', label: 'Processing', date: '', done: ['Processing', 'Shipped'].includes(status) },
+      { key: 'shipped', label: 'Shipped', date: '', done: status === 'Shipped' }
     ];
 
     return {
@@ -85,52 +84,50 @@ export default function Orders() {
       </View>
 
       {/* 📜 SCROLLABLE CONTENT */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-        {orders.map((o) => (
-          <Card key={o._id} style={styles.orderWrap}>
-            <View style={styles.headerRowInside}>
-              <Text style={styles.orderTitle}>Order #{o._id.substring(o._id.length - 6)}</Text>
-              <Text style={styles.orderDate}>{o.createdAt}</Text>
-            </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 30, paddingHorizontal: THEME.spacing.md }}>
+        <View style={styles.gridContainer}>
+          {orders.map((o) => (
+            <TouchableOpacity
+              key={o._id}
+              style={styles.orderCard}
+              onPress={() => router.push(`/OrderDetail?id=${o._id}`)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>{o.status}</Text>
+              </View>
 
-            <OrderTimeline steps={o.steps} />
+              <View style={styles.cardContent}>
+                <Ionicons name="receipt-outline" size={24} color={THEME.colors.primary} />
+                <View style={styles.textContainer}>
+                  <Text style={styles.orderIdText}>Order #{o._id.substring(o._id.length - 6)}</Text>
+                  <Text style={styles.dateText}>{o.createdAt}</Text>
+                </View>
+              </View>
 
-            <View style={{ marginTop: THEME.spacing.md }}>
-              {o.items.map((it, idx) => (
-                <OrderItem key={idx} item={it} />
-              ))}
-            </View>
+              <View style={styles.cardFooter}>
+                <Text style={styles.priceLabel}>Amount</Text>
+                <Text style={styles.priceValue}>₹{o.totalPrice.toFixed(2)}</Text>
+              </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={{ fontWeight: '700' }}>Total</Text>
-              <Text style={{ fontWeight: '700' }}>
-                ₹{o.totalPrice.toFixed(2)}
-              </Text>
-            </View>
+              <View style={styles.itemsCount}>
+                <Text style={styles.itemsText}>{o.items.length} {o.items.length === 1 ? 'Item' : 'Items'}</Text>
+                <Ionicons name="chevron-forward" size={16} color={THEME.colors.subtext} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-            <View style={styles.actionsRow}>
-              <Button
-                variant="ghost"
-                style={{ flex: 1, marginRight: 8 }}
-                onPress={() =>
-                  router.push(`/OrderDetail?id=${o._id}`)
-                }
-              >
-                <Text style={{ color: THEME.colors.primary, fontWeight: '700' }}>
-                  View Details
-                </Text>
-              </Button>
-
-              <Button style={{ flex: 1 }} onPress={() => handleReorder(o)}>
-                Reorder
-              </Button>
-            </View>
-          </Card>
-        )
-        )}
         {orders.length === 0 && (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#fff' }}>No orders found.</Text>
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <Ionicons name="cart-outline" size={64} color="#fff" opacity={0.5} />
+            <Text style={{ color: '#fff', marginTop: 16, fontSize: 16, fontWeight: '600' }}>No orders found.</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/Home')}
+              style={{ marginTop: 20, backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }}
+            >
+              <Text style={{ color: THEME.colors.primary, fontWeight: 'bold' }}>Start Shopping</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -163,35 +160,83 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
 
-  /* Order Cards */
-  orderWrap: {
+  /* Grid Layout */
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingTop: THEME.spacing.sm
+  },
+  orderCard: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: THEME.radii.lg,
     padding: THEME.spacing.md,
-    margin: THEME.spacing.sm,
-    backgroundColor: THEME.colors.surface
+    marginBottom: THEME.spacing.md,
+    ...THEME.shadows.soft,
+    position: 'relative',
+    overflow: 'hidden'
   },
-  headerRowInside: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: THEME.spacing.sm
+  statusBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FFF0E6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 12
   },
-  orderTitle: {
-    fontSize: THEME.fonts.title,
-    fontWeight: '800'
+  statusText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: THEME.colors.primary,
+    textTransform: 'uppercase'
   },
-  orderDate: {
-    color: THEME.colors.subtext
+  cardContent: {
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 15
   },
-
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: THEME.spacing.md,
-    paddingTop: THEME.spacing.sm,
+  textContainer: {
+    alignItems: 'center',
+    marginTop: 8
+  },
+  orderIdText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: THEME.colors.text
+  },
+  dateText: {
+    fontSize: 10,
+    color: THEME.colors.subtext,
+    marginTop: 2
+  },
+  cardFooter: {
     borderTopWidth: 1,
-    borderTopColor: THEME.colors.muted
+    borderTopColor: '#F3F4F6',
+    paddingTop: 10,
+    alignItems: 'center'
   },
-  actionsRow: {
+  priceLabel: {
+    fontSize: 8,
+    color: THEME.colors.subtext,
+    textTransform: 'uppercase',
+    fontWeight: '600'
+  },
+  priceValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: THEME.colors.primary
+  },
+  itemsCount: {
     flexDirection: 'row',
-    marginTop: THEME.spacing.md
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8
+  },
+  itemsText: {
+    fontSize: 10,
+    color: THEME.colors.subtext,
+    marginRight: 2
   }
 })

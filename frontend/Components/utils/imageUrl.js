@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 
-const SERVER_IP = '192.168.1.34'; // Match config.js
-const BASE_URL = `http://${SERVER_IP}:5000`;
+const BASE_URL = 'http://192.168.1.41:5000';
 
 /**
  * Resolves an image URL from the backend.
@@ -15,20 +14,23 @@ export const resolveImageUrl = (url) => {
         // Replace localhost with server IP for mobile devices
         if (url.startsWith('http')) {
             if (url.includes('localhost') || url.includes('127.0.0.1')) {
-                return url.replace(/localhost|127\.0\.0\.1/, SERVER_IP);
+                return url.replace(/localhost|127\.0\.0\.1/, '192.168.1.41');
             }
         }
         return url;
     }
 
-    // If it's a relative path (e.g., /uploads/image.jpg or uploads/image.jpg)
-    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    // Normalize backslashes to forward slashes for Windows paths
+    let cleanPath = url.replace(/\\/g, '/');
 
-    // For local uploads, they are served at /uploads
-    // Check if the path already includes /uploads
-    if (cleanPath.startsWith('/uploads')) {
-        return `${BASE_URL}${cleanPath}`;
+    // Handle case where absolute file path was saved (e.g. C:/Users/.../uploads/image.jpg)
+    if (cleanPath.includes('/uploads/')) {
+        const parts = cleanPath.split('/uploads/');
+        cleanPath = '/uploads/' + parts[parts.length - 1];
+    } else if (!cleanPath.startsWith('/')) {
+        // If it's just a filename
+        cleanPath = `/uploads/${cleanPath}`;
     }
 
-    return `${BASE_URL}/uploads${cleanPath}`;
+    return `${BASE_URL}${cleanPath}`;
 };

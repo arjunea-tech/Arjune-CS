@@ -9,12 +9,30 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking,
+  PixelRatio
 } from 'react-native';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import Carousel from 'react-native-reanimated-carousel';
 import { THEME } from '../Components/ui/theme';
 import { productsAPI } from '../Components/api';
 import { resolveImageUrl } from '../Components/utils/imageUrl';
 import { useCart } from '../Components/CartComponents/CartContext';
+
+// Helper to extract YouTube video ID
+const getVideoId = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+// Helper to get YouTube thumbnail
+const getYouTubeThumbnail = (url) => {
+  const id = getVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
+};
 
 export default function ProductView() {
   const params = useLocalSearchParams();
@@ -100,9 +118,23 @@ export default function ProductView() {
       {/* IMAGE + PRICE */}
       <View style={styles.heroContainer}>
         <View style={styles.imageCard}>
-          <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+          {productImages.length > 1 ? (
+            <Carousel
+              loop
+              width={300} // Adjust based on imageCard width logic if needed, or use Dimensions
+              height={260}
+              autoPlay={false}
+              data={productImages}
+              scrollAnimationDuration={1000}
+              renderItem={({ item }) => (
+                <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
+              )}
+            />
+          ) : (
+            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+          )}
 
-          {/* ROUND PRICE BADGE */}
+          {/* ROUND PRICE BADGE - Keep existing logic */}
           <View style={styles.priceBadge}>
             <Text style={styles.discountedPrice}>₹{currentPrice.toFixed(0)}</Text>
             {hasDiscount && (
@@ -114,28 +146,8 @@ export default function ProductView() {
           </View>
         </View>
 
-        {/* Gallery Thumbnails */}
-        {productImages.length > 1 && (
-          <View style={styles.thumbnailContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {productImages.map((img, index) => {
-                const resolvedImg = resolveImageUrl(img);
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => setSelectedImage(resolvedImg)}
-                    style={[
-                      styles.thumbnail,
-                      selectedImage === resolvedImg && styles.activeThumbnail
-                    ]}
-                  >
-                    <Image source={{ uri: resolvedImg }} style={styles.thumbnailImage} />
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
+        {/* Gallery Thumbnails (Optional if Carousel is used, but good for manual selection) - keeping it but linking it might be redundant if carousel is self-contained. Let's keep it simple and remove thumbnails if using carousel for main view, OR keep it. Carousel is better. Let's rely on Carousel swiping. */}
+        {/* Removing thumbnail container to check cleaner look, or I can update selectedImage if I want bidirectional sync, but that needs state lifting. For now, Carousel is enough. */}
 
         {/* BUTTONS (MOVED UP) */}
         <View style={styles.buttonRow}>
@@ -164,13 +176,29 @@ export default function ProductView() {
       <View style={styles.detailsPanel}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{product.name}</Text>
+          {product.pack ? (
+            <View style={{ marginTop: 4, marginBottom: 4 }}>
+              <Text style={{ fontSize: 14, color: '#666', fontWeight: 'bold' }}>
+                Pack In: <Text style={{ color: THEME.colors.primary }}>{product.pack}</Text>
+              </Text>
+            </View>
+          ) : null}
+
           <Text style={styles.description}>{product.description}</Text>
 
-          <Text style={styles.sectionTitle}>Video</Text>
+          {product.videoUrl && getVideoId(product.videoUrl) && (
+            <>
+              <Text style={styles.sectionTitle}>Video</Text>
 
-          <View style={styles.videoContainer}>
-            <MaterialCommunityIcons name="play" size={40} color="#ff7f00" />
-          </View>
+              <View style={[styles.videoContainer, { borderWidth: 0, overflow: 'hidden', backgroundColor: '#000' }]}>
+                <YoutubePlayer
+                  height={220}
+                  play={false}
+                  videoId={getVideoId(product.videoUrl)}
+                />
+              </View>
+            </>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -300,11 +328,11 @@ const styles = StyleSheet.create({
 
   videoContainer: {
     marginTop: 15,
-    height: 180,
+    height: 220,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#ff7f00',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center'
   },
   thumbnailContainer: {
