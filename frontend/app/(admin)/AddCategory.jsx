@@ -74,6 +74,9 @@ export default function AddCategory() {
                 const match = /\.(\w+)$/.exec(filename);
                 const type = match ? `image/${match[1]}` : `image`;
                 formData.append('image', { uri: image, name: filename, type });
+            } else if (!image) {
+                // If it's edit mode and image is null, we want to clear it
+                formData.append('clearImage', 'true');
             }
 
             let res;
@@ -144,23 +147,31 @@ export default function AddCategory() {
                 <View className="bg-white rounded-xl p-5 mb-5 shadow-sm border border-100 space-y-4 gap-4">
 
                     {/* Image Placeholder */}
-                    <TouchableOpacity
-                        onPress={pickImage}
-                        className="h-40 bg-gray-100 rounded-xl items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden"
-                    >
+                    <View className="h-40 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden relative">
                         {image ? (
-                            <Image
-                                source={{ uri: image }}
-                                style={{ width: '100%', height: '100%' }}
-                                resizeMode="cover"
-                            />
-                        ) : (
                             <>
+                                <Image
+                                    source={{ uri: image }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    resizeMode="cover"
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setImage(null)}
+                                    className="absolute top-2 right-2 bg-red-500 rounded-full p-1 z-10"
+                                >
+                                    <Ionicons name="trash" size={16} color="white" />
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            <TouchableOpacity
+                                onPress={pickImage}
+                                className="w-full h-full items-center justify-center"
+                            >
                                 <Ionicons name="image-outline" size={40} color="gray" />
                                 <Text className="text-gray-400 mt-2 font-bold">Upload Category Icon</Text>
-                            </>
+                            </TouchableOpacity>
                         )}
-                    </TouchableOpacity>
+                    </View>
 
                     <View>
                         <Text className="mb-2 text-xs font-bold uppercase text-gray-500">Category Name</Text>

@@ -4,30 +4,31 @@ const BASE_URL = 'http://192.168.1.35:5000';
 
 /**
  * Resolves an image URL from the backend.
- * Handles relative paths and replaces localhost with the server IP for mobile compatibility.
+ * Handles relative paths, absolute file paths, and replaces old/localhost IPs with current server IP.
  */
 export const resolveImageUrl = (url) => {
     if (!url) return null;
 
-    // Normalize backslashes to forward slashes for Windows paths
-    let cleanPath = url.replace(/\\/g, '/');
+    // Normalize slashes
+    let cleanUrl = url.replace(/\\/g, '/');
 
-    // If it's a full URL or contains /uploads/, extract the relative part
-    // and use our current BASE_URL
-    if (cleanPath.includes('/uploads/')) {
-        const parts = cleanPath.split('/uploads/');
-        const path = parts[parts.length - 1]; // Get just the filename/subpath
-        return `${BASE_URL}/uploads/${path}`;
+    // 1. If it contains '/uploads/', assume it's a local backend image and force the current BASE_URL
+    if (cleanUrl.includes('/uploads/')) {
+        const parts = cleanUrl.split('/uploads/');
+        const filename = parts[parts.length - 1];
+        return `${BASE_URL}/uploads/${filename}`;
     }
 
-    // Handle just filename case
-    if (!cleanPath.startsWith('http') && !cleanPath.startsWith('file')) {
-        if (!cleanPath.startsWith('/')) {
-            cleanPath = `/uploads/${cleanPath}`;
-        }
-        return `${BASE_URL}${cleanPath}`;
+    // 2. If it's a simple filename (e.g. "no-image.jpg"), assume it's in uploads
+    if (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('file') && !cleanUrl.includes('/')) {
+        return `${BASE_URL}/uploads/${cleanUrl}`;
     }
 
-    // For external URLs (not CrackerShop uploads)
-    return cleanPath;
+    // 3. Handle other full URLs (e.g. external images)
+    if (cleanUrl.startsWith('http')) {
+        // Still fix localhost or old IPs if present
+        return cleanUrl.replace(/localhost|127\.0\.0\.1|192\.168\.\d+\.\d+/, '192.168.1.35');
+    }
+
+    return cleanUrl;
 };

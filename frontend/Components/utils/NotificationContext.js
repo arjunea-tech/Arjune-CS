@@ -1,8 +1,20 @@
-import { useRouter } from 'expo-router';
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { AppState } from 'react-native';
+import { useRouter, useSegments } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { AppState, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { notificationsAPI } from '../api';
 import { useAuth } from './AuthContext';
+
+// Configure how notifications behave when the app is in foreground
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+    }),
+});
 
 const NotificationContext = createContext();
 
@@ -33,6 +45,35 @@ export const NotificationProvider = ({ children }) => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, user?.role]);
 
+    const registerForPushNotificationsAsync = async () => {
+        // Android Push Notification support was removed from Expo Go in SDK 53.
+        // We must skip this setup if running in Expo Go to avoid the crash.
+        if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+            console.log("Push notifications are not supported in Expo Go (SDK 53+). Using local polling only.");
+            return;
+        }
+
+        if (Platform.OS === 'android') {
+            await Notifications.setNotificationChannelAsync('default', {
+                name: 'default',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+            });
+        }
+
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+
+        if (finalStatus !== 'granted') {
+            console.log('Failed to get push token for push notification!');
+            return;
+        }
+    };
     const checkNotifications = async () => {
         try {
             const res = await notificationsAPI.getNotifications();

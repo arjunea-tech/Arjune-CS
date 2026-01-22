@@ -118,33 +118,40 @@ export default function ProductView() {
       {/* IMAGE + PRICE */}
       <View style={styles.heroContainer}>
         <View style={styles.imageCard}>
-          {productImages.length > 1 ? (
-            <Carousel
-              loop
-              width={300} // Adjust based on imageCard width logic if needed, or use Dimensions
-              height={260}
-              autoPlay={false}
-              data={productImages}
-              scrollAnimationDuration={1000}
-              renderItem={({ item }) => (
-                <View>
-                  <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
-                  {product.isDiwaliSpecial && (
-                    <View style={styles.diwaliBadge}>
-                      <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            />
+          {productImages.length > 0 && productImages[0] ? (
+            productImages.length > 1 ? (
+              <Carousel
+                loop
+                width={300}
+                height={260}
+                autoPlay={false}
+                data={productImages}
+                scrollAnimationDuration={1000}
+                renderItem={({ item }) => (
+                  <View>
+                    <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
+                    {product.isDiwaliSpecial && (
+                      <View style={styles.diwaliBadge}>
+                        <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              />
+            ) : (
+              <View>
+                <Image source={{ uri: resolveImageUrl(productImages[0]) }} style={styles.fullImage} />
+                {product.isDiwaliSpecial && (
+                  <View style={styles.diwaliBadge}>
+                    <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
+                  </View>
+                )}
+              </View>
+            )
           ) : (
-            <View>
-              <Image source={{ uri: resolveImageUrl(productImages[0]) }} style={styles.fullImage} />
-              {product.isDiwaliSpecial && (
-                <View style={styles.diwaliBadge}>
-                  <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
-                </View>
-              )}
+            <View style={[styles.fullImage, { backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }]}>
+              <MaterialCommunityIcons name="image-off-outline" size={60} color="#ccc" />
+              <Text style={{ color: '#aaa', marginTop: 10 }}>No Image Available</Text>
             </View>
           )}
 

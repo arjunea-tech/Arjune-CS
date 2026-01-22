@@ -137,16 +137,20 @@ export default function AddNewProduct() {
             console.log('[handleSave] State:', { name, price, discountPrice, stock, category, isFeatured, isDiwaliSpecial });
 
             // Append images
-            images.forEach((img, index) => {
-                if (!img.startsWith('http')) {
-                    const filename = img.split('/').pop().split('?')[0]; // Remove query params if any
-                    const match = /\.(\w+)$/.exec(filename);
-                    const type = match ? `image/${match[1]}` : `image/jpeg`;
-                    formData.append('images', { uri: img, name: filename, type });
-                } else {
-                    formData.append('existingImages', img);
-                }
-            });
+            if (images.length === 0) {
+                formData.append('clearImages', 'true');
+            } else {
+                images.forEach((img, index) => {
+                    if (!img.startsWith('http')) {
+                        const filename = img.split('/').pop().split('?')[0]; // Remove query params if any
+                        const match = /\.(\w+)$/.exec(filename);
+                        const type = match ? `image/${match[1]}` : `image/jpeg`;
+                        formData.append('images', { uri: img, name: filename, type });
+                    } else {
+                        formData.append('existingImages', img);
+                    }
+                });
+            }
 
             let res;
             if (isEditMode) {

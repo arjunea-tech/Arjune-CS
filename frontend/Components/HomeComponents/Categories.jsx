@@ -4,7 +4,7 @@ import { resolveImageUrl } from '../utils/imageUrl'
 
 const Categories = memo(({ item = {}, image, isAll = false, isActive = false, onPress = () => { } }) => {
   const imgString = image || (item && typeof item.image === 'string' ? item.image : undefined)
-  const source = isAll
+  const source = isAll || !imgString
     ? null
     : (imgString ? { uri: resolveImageUrl(imgString) } : null)
 
@@ -21,13 +21,19 @@ const Categories = memo(({ item = {}, image, isAll = false, isActive = false, on
           <View className="w-full h-full bg-white items-center justify-center">
             <Text className="text-base font-bold text-gray-700">All</Text>
           </View>
-        ) : (
+        ) : source ? (
           <Image
             source={source}
             style={{ width: '100%', height: '100%' }}
             resizeMode="cover"
             fadeDuration={0}
           />
+        ) : (
+          <View className="w-full h-full bg-orange-50 items-center justify-center">
+            <Text className="text-2xl font-bold text-orange-400">
+              {item.name ? item.name.charAt(0).toUpperCase() : '?'}
+            </Text>
+          </View>
         )}
       </View>
 
