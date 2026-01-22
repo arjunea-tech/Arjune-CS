@@ -1,8 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
-import { Text } from 'react-native'
+import { Text, Platform } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useCart } from '../../Components/CartComponents/CartContext'
 
 export default function _layout() {
+  const { cartItems } = useCart();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -10,10 +14,14 @@ export default function _layout() {
         tabBarActiveTintColor: '#FF6B00',
         tabBarInactiveTintColor: '#999',
         tabBarStyle: {
-          height: 60,
-          paddingBottom: 6,
-          paddingTop: 6,
-          marginBottom: 5,
+          height: 65 + insets.bottom,
+          paddingBottom: insets.bottom + 10,
+          paddingTop: 10,
+          backgroundColor: '#FFF7ED', // Light orange
+          borderTopWidth: 1,
+          borderTopColor: '#FFEDD5',
+          elevation: 0, // Remove shadow/elevation
+          shadowOpacity: 0, // Remove iOS shadow
         },
       }}
     >
@@ -21,7 +29,7 @@ export default function _layout() {
         name="Home"
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <Text 
+            <Text
               style={{
                 fontSize: 12,
                 fontWeight: focused ? '700' : '400',
@@ -62,6 +70,12 @@ export default function _layout() {
               color={color}
             />
           ),
+          tabBarBadge: cartItems.length > 0 ? cartItems.length : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: '#FF6B00',
+            color: 'white',
+            fontSize: 10,
+          },
         }}
       />
 

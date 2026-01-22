@@ -5,8 +5,13 @@ const asyncHandler = require('../middleware/async');
 // @route   POST /api/v1/auth/register
 // @access  Public
 exports.register = asyncHandler(async (req, res, next) => {
-    if (!req.body) {
-        return res.status(400).json({ success: false, error: 'Request body is missing. Ensure you are sending multipart/form-data correctly.' });
+    console.log('[AUTH] Register request body:', Object.keys(req.body));
+    
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Request body is empty. Please send name, email, and password.' 
+        });
     }
 
     const {
@@ -21,6 +26,20 @@ exports.register = asyncHandler(async (req, res, next) => {
         state
     } = req.body;
 
+    // Validate required fields
+    if (!name || !email || !password) {
+        console.log('[AUTH] Missing required fields:', { hasName: !!name, hasEmail: !!email, hasPassword: !!password });
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Please provide name, email, and password',
+            details: [
+                !name && { field: 'name', message: 'Name is required' },
+                !email && { field: 'email', message: 'Email is required' },
+                !password && { field: 'password', message: 'Password is required' }
+            ].filter(Boolean)
+        });
+    }
+
     let avatar = '';
     if (req.file) {
         avatar = req.file.path;
@@ -30,21 +49,43 @@ exports.register = asyncHandler(async (req, res, next) => {
         }
     }
 
-    // Create user
-    const user = await User.create({
-        name,
-        email,
-        password,
-        role,
-        avatar,
-        mobileNumber,
-        address,
-        pincode,
-        district,
-        state
-    });
+    // Check if user already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        console.log('[AUTH] User already exists:', email);
+        return res.status(400).json({ success: false, error: 'Email already registered' });
+    }
 
-    sendTokenResponse(user, 201, res);
+    try {
+        // Create user with only provided fields
+        const userData = {
+            name,
+            email,
+            password,
+            role: role || 'customer',
+            avatar
+        };
+
+        // Add optional fields if provided and not empty
+        if (mobileNumber && mobileNumber.trim()) userData.mobileNumber = mobileNumber;
+        if (address && address.trim()) userData.address = address;
+        if (pincode && pincode.trim()) userData.pincode = pincode;
+        if (district && district.trim()) userData.district = district;
+        if (state && state.trim()) userData.state = state;
+
+        console.log('[AUTH] Creating user with data:', { name, email, role: userData.role });
+        
+        const user = await User.create(userData);
+        console.log('[AUTH] User created successfully:', user._id);
+        
+        sendTokenResponse(user, 201, res);
+    } catch (error) {
+        console.error('[AUTH] Registration error:', error.message);
+        return res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Registration failed' 
+        });
+    }
 });
 
 // @desc    Login user

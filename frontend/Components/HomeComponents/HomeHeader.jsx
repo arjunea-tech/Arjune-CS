@@ -47,7 +47,7 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
         <View>
             {/* Header */}
             <View
-                className="w-full h-48 rounded-b-3xl px-6 pt-6 pb-4 justify-between overflow-hidden"
+                className="w-full h-36 rounded-b-3xl px-6 pt-2 pb-4 justify-between overflow-hidden"
                 style={{ backgroundColor: COLORS.primary }}
             >
                 {/* 🎆 LOTTIE BACKGROUND */}
@@ -66,7 +66,7 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
                 />
 
                 {/* CONTENT ABOVE LOTTIE */}
-                <View className="flex-row w-full items-center justify-between mt-5">
+                <View className="flex-row w-full items-center justify-between mt-2">
                     <Text className="text-white text-2xl font-bold">3BEE CRACKER</Text>
                     <TouchableOpacity
                         className="w-12 h-12 bg-white rounded-full items-center justify-center"
@@ -81,14 +81,14 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
                     </TouchableOpacity>
                 </View>
 
-                <View className="h-4" />
 
-                <View className="w-full h-12 bg-white rounded-xl flex-row items-center px-4 shadow-md">
+
+                <View className="w-full h-12 bg-white rounded-xl flex-row items-center px-4 shadow-md ">
                     <MaterialCommunityIcons name="magnify" size={24} color="#999" />
                     <TextInput
                         placeholder="Search products..."
                         placeholderTextColor="#999"
-                        className="flex-1 ml-2 text-gray-800"
+                        className="flex-1 ml-2 text-gray-800 font-medium"
                         value={searchValue}
                         onChangeText={onChangeText}
                     />

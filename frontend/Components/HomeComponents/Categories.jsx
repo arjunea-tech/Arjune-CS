@@ -6,7 +6,7 @@ const Categories = memo(({ item = {}, image, isAll = false, isActive = false, on
   const imgString = image || (item && typeof item.image === 'string' ? item.image : undefined)
   const source = isAll
     ? null
-    : (imgString ? { uri: resolveImageUrl(imgString) } : require('../../assets/images/icon.png'))
+    : (imgString ? { uri: resolveImageUrl(imgString) } : null)
 
   return (
     <TouchableOpacity

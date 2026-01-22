@@ -46,7 +46,14 @@ export function CartProvider({ children }) {
   const clearCart = React.useCallback(() => setCartItems([]), []);
 
   const totals = useMemo(() => {
-    const subtotal = cartItems.reduce((s, it) => {
+    // 1. Original Item Total (using full price)
+    const itemsTotal = cartItems.reduce((s, it) => {
+      if (!it.product) return s;
+      return s + (it.product.price || 0) * it.quantity;
+    }, 0);
+
+    // 2. Discounted Item Total (using discountPrice where applicable)
+    const discountedTotal = cartItems.reduce((s, it) => {
       if (!it.product) return s;
       const price = (it.product.discountPrice && it.product.discountPrice < it.product.price)
         ? it.product.discountPrice
@@ -54,10 +61,17 @@ export function CartProvider({ children }) {
       return s + price * it.quantity;
     }, 0);
 
-    const discount = 0;
-    const shipping = subtotal > 0 ? (subtotal >= 100 ? 0 : 20) : 0;
-    const grandTotal = Math.round(subtotal - discount + shipping);
-    return { subtotal, discount, shipping, grandTotal };
+    const discount = itemsTotal - discountedTotal;
+    const shipping = discountedTotal > 0 ? (discountedTotal >= 500 ? 0 : 50) : 0;
+    const grandTotal = Math.round(discountedTotal + shipping);
+
+    return {
+      itemsTotal,
+      subtotal: itemsTotal, // Displayed as Items Total
+      discount,
+      shipping,
+      grandTotal
+    };
   }, [cartItems]);
 
   const value = useMemo(() => ({

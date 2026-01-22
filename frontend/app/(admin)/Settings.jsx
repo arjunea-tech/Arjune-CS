@@ -1,7 +1,7 @@
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
 import { useAuth } from '../../Components/utils/AuthContext';
 import { resolveImageUrl } from '../../Components/utils/imageUrl';
@@ -10,14 +10,11 @@ export default function Settings() {
     const navigation = useNavigation();
     const router = useRouter();
     const { user, logout } = useAuth();
-    const [isDarkMode, setIsDarkMode] = useState(false);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-    const SettingItem = ({ icon, label, subLabel, onPress, isSwitch, switchValue, onSwitchChange, isDestructive }) => (
+    const SettingItem = ({ icon, label, subLabel, onPress, isDestructive }) => (
         <TouchableOpacity
-            onPress={isSwitch ? () => onSwitchChange && onSwitchChange(!switchValue) : onPress}
+            onPress={onPress}
             className="mb-1 flex-row items-center justify-between border-b border-gray-50 bg-white px-4 py-4 active:bg-gray-50 last:border-0"
-            disabled={isSwitch}
         >
             <View className="flex-row items-center">
                 <View className={`mr-4 items-center justify-center rounded-full p-2 ${isDestructive ? 'bg-red-50' : 'bg-gray-50'}`}>
@@ -28,18 +25,7 @@ export default function Settings() {
                     {subLabel && <Text className="text-xs text-gray-400">{subLabel}</Text>}
                 </View>
             </View>
-
-            {isSwitch ? (
-                <Switch
-                    trackColor={{ false: '#E5E7EB', true: '#FF6B00' }}
-                    thumbColor={'#FFFFFF'}
-                    ios_backgroundColor="#E5E7EB"
-                    onValueChange={onSwitchChange}
-                    value={switchValue}
-                />
-            ) : (
-                <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-            )}
+            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
         </TouchableOpacity>
     );
 
@@ -105,43 +91,6 @@ export default function Settings() {
                     </View>
                 </View>
 
-                {/* Preferences */}
-                <View>
-                    <SectionHeader title="Preferences" />
-                    <View className="mx-4 overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
-                        <SettingItem
-                            icon={<Ionicons name="notifications-outline" size={20} color="#4B5563" />}
-                            label="Push Notifications"
-                            isSwitch
-                            switchValue={notificationsEnabled}
-                            onSwitchChange={setNotificationsEnabled}
-                        />
-                        <SettingItem
-                            icon={<Ionicons name="moon-outline" size={20} color="#4B5563" />}
-                            label="Dark Mode"
-                            isSwitch
-                            switchValue={isDarkMode}
-                            onSwitchChange={setIsDarkMode}
-                        />
-                    </View>
-                </View>
-
-                {/* Support */}
-                <View>
-                    <SectionHeader title="Support" />
-                    <View className="mx-4 overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
-                        <SettingItem
-                            icon={<MaterialIcons name="help-outline" size={20} color="#4B5563" />}
-                            label="Help Center"
-                            onPress={() => { }}
-                        />
-                        <SettingItem
-                            icon={<MaterialIcons name="privacy-tip" size={20} color="#4B5563" />}
-                            label="Privacy Policy"
-                            onPress={() => { }}
-                        />
-                    </View>
-                </View>
 
                 {/* Logout */}
                 <View className="mx-4 mt-8 mb-10">

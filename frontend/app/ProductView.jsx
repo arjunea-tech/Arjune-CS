@@ -127,11 +127,25 @@ export default function ProductView() {
               data={productImages}
               scrollAnimationDuration={1000}
               renderItem={({ item }) => (
-                <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
+                <View>
+                  <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
+                  {product.isDiwaliSpecial && (
+                    <View style={styles.diwaliBadge}>
+                      <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
+                    </View>
+                  )}
+                </View>
               )}
             />
           ) : (
-            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+            <View>
+              <Image source={{ uri: resolveImageUrl(productImages[0]) }} style={styles.fullImage} />
+              {product.isDiwaliSpecial && (
+                <View style={styles.diwaliBadge}>
+                  <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
+                </View>
+              )}
+            </View>
           )}
 
           {/* ROUND PRICE BADGE - Keep existing logic */}
@@ -190,7 +204,7 @@ export default function ProductView() {
             <>
               <Text style={styles.sectionTitle}>Video</Text>
 
-              <View style={[styles.videoContainer, { borderWidth: 0, overflow: 'hidden', backgroundColor: '#000' }]}>
+              <View style={[styles.videoContainer, { borderWidth: 0, overflow: 'hidden', backgroundColor: '#f5f5f5' }]}>
                 <YoutubePlayer
                   height={220}
                   play={false}
@@ -233,7 +247,7 @@ const styles = StyleSheet.create({
   imageCard: {
     width: '90%',
     height: 260,
-    backgroundColor: '#000',
+    backgroundColor: '#eeeeee',
     borderRadius: 50,
     overflow: 'hidden'
   },
@@ -274,6 +288,23 @@ const styles = StyleSheet.create({
     color: '#ff7f00'
   },
 
+  diwaliBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#ff0000',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fff',
+    elevation: 5
+  },
+  diwaliText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold'
+  },
   /* 🔼 BUTTONS MOVED UP HERE */
   buttonRow: {
     flexDirection: 'row',

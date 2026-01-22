@@ -12,17 +12,17 @@ import { InputField } from '../LoginComponents/InputField';
 const { width } = Dimensions.get('window');
 
 const RegisterSchema = YUP.object().shape({
-  fullName: YUP.string().required('Name is required'),
+  fullName: YUP.string().min(2, 'Name must be at least 2 characters').max(50, 'Name must be at most 50 characters').required('Name is required'),
   email: YUP.string().email('Invalid email').required('Email is required'),
-  password: YUP.string().min(8, 'Too short').required('Required'),
+  password: YUP.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
   confirmPassword: YUP.string()
     .oneOf([YUP.ref('password'), null], 'Passwords must match')
-    .required('Required'),
-  mobileNumber: YUP.string().required('Mobile number is required'),
-  address: YUP.string().required('Address is required'),
-  pincode: YUP.string().length(6, 'Invalid pincode').required('Pincode is required'),
-  district: YUP.string().required('District is required'),
-  state: YUP.string().required('State is required'),
+    .required('Please confirm your password'),
+  mobileNumber: YUP.string().matches(/^[0-9]{10}$/, 'Mobile must be 10 digits').optional(),
+  address: YUP.string().optional(),
+  pincode: YUP.string().matches(/^[0-9]{6}$/, 'Pincode must be 6 digits').optional(),
+  district: YUP.string().optional(),
+  state: YUP.string().optional(),
 });
 
 export function RegisterCard({ onRegister, onGoogleLogin, loading }) {

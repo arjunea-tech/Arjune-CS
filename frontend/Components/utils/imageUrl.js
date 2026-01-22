@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const BASE_URL = 'http://192.168.1.41:5000';
+const BASE_URL = 'http://192.168.1.35:5000';
 
 /**
  * Resolves an image URL from the backend.
@@ -9,28 +9,25 @@ const BASE_URL = 'http://192.168.1.41:5000';
 export const resolveImageUrl = (url) => {
     if (!url) return null;
 
-    // If it's already a full URL or a local file URI
-    if (url.startsWith('http') || url.startsWith('file')) {
-        // Replace localhost with server IP for mobile devices
-        if (url.startsWith('http')) {
-            if (url.includes('localhost') || url.includes('127.0.0.1')) {
-                return url.replace(/localhost|127\.0\.0\.1/, '192.168.1.41');
-            }
-        }
-        return url;
-    }
-
     // Normalize backslashes to forward slashes for Windows paths
     let cleanPath = url.replace(/\\/g, '/');
 
-    // Handle case where absolute file path was saved (e.g. C:/Users/.../uploads/image.jpg)
+    // If it's a full URL or contains /uploads/, extract the relative part
+    // and use our current BASE_URL
     if (cleanPath.includes('/uploads/')) {
         const parts = cleanPath.split('/uploads/');
-        cleanPath = '/uploads/' + parts[parts.length - 1];
-    } else if (!cleanPath.startsWith('/')) {
-        // If it's just a filename
-        cleanPath = `/uploads/${cleanPath}`;
+        const path = parts[parts.length - 1]; // Get just the filename/subpath
+        return `${BASE_URL}/uploads/${path}`;
     }
 
-    return `${BASE_URL}${cleanPath}`;
+    // Handle just filename case
+    if (!cleanPath.startsWith('http') && !cleanPath.startsWith('file')) {
+        if (!cleanPath.startsWith('/')) {
+            cleanPath = `/uploads/${cleanPath}`;
+        }
+        return `${BASE_URL}${cleanPath}`;
+    }
+
+    // For external URLs (not CrackerShop uploads)
+    return cleanPath;
 };

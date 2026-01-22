@@ -40,14 +40,24 @@ const Product = ({ product = {}, horizontal = false }) => {
     >
       {/* Image */}
       {product?.image ? (
-        <Image
-          source={{ uri: resolveImageUrl(product.image) }}
-          style={{ width: '100%', height: 70, borderRadius: 10 }}
-          contentFit="cover"
-          transition={200}
-        />
+        <View>
+          <Image
+            source={{ uri: resolveImageUrl(product.image) }}
+            style={{ width: '100%', height: 70, borderRadius: 10 }}
+            contentFit="cover"
+            transition={200}
+          />
+          {product.isDiwaliSpecial && (
+            <View
+              className="absolute top-1 right-1 bg-red-600 px-1.5 py-0.5 rounded-md border border-white"
+              style={{ elevation: 2 }}
+            >
+              <Text className="text-white text-[8px] font-bold">🪔 SPECIAL</Text>
+            </View>
+          )}
+        </View>
       ) : (
-        <View className="h-[70px] bg-[#ddd] rounded-lg" />
+        <View style={{ width: '100%', height: 70, borderRadius: 10, backgroundColor: '#f3f4f6' }} />
       )}
 
       {/* Name */}

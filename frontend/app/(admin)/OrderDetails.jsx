@@ -29,33 +29,43 @@ export default function OrderDetails() {
         }
     };
 
-    const mapBackendToUI = (o) => ({
-        id: o._id,
-        date: new Date(o.createdAt).toLocaleString(),
-        status: o.orderStatus,
-        customer: {
-            name: o.user?.name || o.orderItems?.[0]?.name?.split(' ')?.[0] || 'Guest', // Extreme fallback for name
-            email: o.user?.email || 'N/A',
-            phone: o.user?.mobileNumber || o.user?.phone || o.user?.mobile ||
-                (o.shippingAddress?.match(/\d{10}/)?.[0]) || 'N/A' // Try regex for phone
-        },
-        address: o.shippingAddress ||
-            (o.user?.address ? `${o.user.address}, ${o.user.district}, ${o.user.state} - ${o.user.pincode}` : null) ||
-            o.shippingInfo?.address || 'N/A',
-        items: o.orderItems.map(i => ({
-            name: i.name,
-            qty: i.qty,
-            price: i.price,
-            total: i.qty * i.price
-        })),
-        payment: {
-            method: o.paymentMethod,
-            subtotal: `₹${o.itemsPrice}`,
-            tax: `₹${o.taxPrice}`,
-            shipping: `₹${o.shippingPrice}`,
-            total: `₹${o.totalPrice}`
-        }
-    });
+    const mapBackendToUI = (o) => {
+        const originalTotal = o.orderItems.reduce((acc, i) => acc + ((i.price || 0) * i.qty), 0);
+        // o.totalPrice is final paid. o.itemsPrice is discounted subtotal.
+        // Discount = Original Total - Discounted Subtotal (itemsPrice)
+        // If itemsPrice is missing, fallback to totalPrice - shipping
+        const discountedSubtotal = o.itemsPrice || (o.totalPrice - (o.shippingPrice || 0));
+        const discount = Math.max(0, originalTotal - discountedSubtotal);
+
+        return {
+            id: o._id,
+            date: new Date(o.createdAt).toLocaleString(),
+            status: o.orderStatus,
+            customer: {
+                name: o.user?.name || o.orderItems?.[0]?.name?.split(' ')?.[0] || 'Guest',
+                email: o.user?.email || 'N/A',
+                phone: o.user?.mobileNumber || o.user?.phone || o.user?.mobile ||
+                    (o.shippingAddress?.match(/\d{10}/)?.[0]) || 'N/A'
+            },
+            address: o.shippingAddress ||
+                (o.user?.address ? `${o.user.address}, ${o.user.district}, ${o.user.state} - ${o.user.pincode}` : null) ||
+                o.shippingInfo?.address || 'N/A',
+            items: o.orderItems.map(i => ({
+                name: i.name,
+                qty: i.qty,
+                price: i.price,
+                total: i.qty * i.price
+            })),
+            payment: {
+                method: o.paymentMethod,
+                subtotal: `₹${originalTotal}`,
+                discount: `-₹${discount}`,
+                tax: `₹${o.taxPrice}`,
+                shipping: `₹${o.shippingPrice}`,
+                total: `₹${o.totalPrice}`
+            }
+        };
+    };
 
     const handleUpdateStatus = async (newStatus) => {
         try {
@@ -179,11 +189,16 @@ export default function OrderDetails() {
                 </View>
 
                 {/* Payment Summary */}
+                {/* Payment Summary */}
                 <View className="bg-white p-5 rounded-2xl shadow-sm mb-24 border border-gray-100">
                     <Text className="text-sm font-bold text-gray-500 uppercase mb-4">Payment Summary</Text>
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-gray-500">Subtotal</Text>
+                        <Text className="text-gray-500">Items Total</Text>
                         <Text className="font-medium text-gray-800">{order.payment.subtotal}</Text>
+                    </View>
+                    <View className="flex-row justify-between mb-2">
+                        <Text className="text-gray-500">Discount</Text>
+                        <Text className="font-medium text-green-600">{order.payment.discount}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-gray-500">Tax</Text>

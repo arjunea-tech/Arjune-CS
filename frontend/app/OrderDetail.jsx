@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Alert, ScrollView, Text, TouchableOpacity, View, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
+import * as Print from 'expo-print';
+import { shareAsync } from 'expo-sharing';
 import { useCart } from '../Components/CartComponents/CartContext'
 import OrderItem from '../Components/OrderComponents/OrderItem'
 import OrderTimeline from '../Components/OrderComponents/OrderTimeline'
@@ -82,6 +84,137 @@ export default function OrderDetail() {
     // In a real app, you would iterate over order.items and call addItem(it)
   }
 
+  const handleDownloadInvoice = async () => {
+    try {
+      if (!order) return;
+
+      const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+            <style>
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.5; }
+              .header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 40px; }
+              .logo-text { font-size: 28px; font-weight: 800; color: #E65100; letter-spacing: -1px; }
+              .invoice-details { text-align: right; }
+              .invoice-title { font-size: 36px; font-weight: 300; color: #ccc; text-transform: uppercase; margin: 0; line-height: 1; }
+              .invoice-meta { font-size: 14px; color: #666; margin-top: 5px; }
+              
+              .billing-info { display: flex; justify-content: space-between; margin-bottom: 50px; }
+              .billing-col { width: 45%; }
+              .col-header { font-size: 11px; text-transform: uppercase; color: #999; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
+              .address-block { font-size: 15px; color: #111; }
+              .address-line { margin-bottom: 4px; display: block; }
+              
+              table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+              th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #eee; font-size: 11px; text-transform: uppercase; color: #666; font-weight: 700; letter-spacing: 0.5px; }
+              td { padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: top; }
+              .text-right { text-align: right; }
+              .text-center { text-align: center; }
+              .font-medium { font-weight: 500; }
+              
+              .summary-section { display: flex; justify-content: flex-end; }
+              .summary-box { width: 280px; background: #fafafa; padding: 20px; border-radius: 8px; }
+              .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #555; }
+              .total-row { border-top: 2px solid #333; margin-top: 15px; padding-top: 15px; font-weight: 700; font-size: 18px; color: #000; align-items: center; }
+              
+              .footer { margin-top: 80px; text-align: center; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 30px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="logo-text">CrackerShop</div>
+                <div style="font-size: 12px; color: #999; margin-top: 5px;">Premium Crackers Store</div>
+              </div>
+              <div class="invoice-details">
+                <div class="invoice-title">Invoice</div>
+                <div class="invoice-meta"><strong>Invoice #:</strong> ${order._id.substring(order._id.length - 8).toUpperCase()}</div>
+                <div class="invoice-meta"><strong>Date:</strong> ${order.createdAt || dateStr}</div>
+              </div>
+            </div>
+
+            <div class="billing-info">
+              <div class="billing-col">
+                <div class="col-header">Billed To</div>
+                <div class="address-block">
+                  <span class="address-line" style="font-weight: 700; font-size: 16px;">${order.user?.name || 'Valued Customer'}</span>
+                  <span class="address-line">${order.shippingAddress?.replace(/\\n/g, '<br/>') || 'No Address Provided'}</span>
+                  <span class="address-line" style="margin-top: 8px; color: #666;">${order.user?.mobileNumber || ''}</span>
+                </div>
+              </div>
+              <div class="billing-col text-right">
+                <div class="col-header">Payment Status</div>
+                <div class="address-block">
+                  <span class="address-line"><span style="color: #4CAF50; font-weight: 700;">Online Payment</span></span>
+                  <span class="address-line" style="margin-top: 5px; font-size: 13px; color: #666;">Order Status: ${order.status}</span>
+                </div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 50%">Item Description</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-right">Unit Price</th>
+                  <th class="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order.items.map(item => `
+                  <tr>
+                    <td>
+                      <div class="font-medium">${item.name}</div>
+                    </td>
+                    <td class="text-center">${item.qty}</td>
+                    <td class="text-right">₹${item.price}</td>
+                    <td class="text-right">₹${(item.price * item.qty).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="summary-section">
+              <div class="summary-box">
+                <div class="summary-row">
+                  <span>Subtotal</span>
+                  <span>₹${order.items.reduce((acc, i) => acc + (i.price * i.qty), 0).toFixed(2)}</span>
+                </div>
+                <div class="summary-row">
+                  <span>Shipping Fee</span>
+                  <span>₹${(order.shippingPrice || 0).toFixed(2)}</span>
+                </div>
+                <div class="summary-row" style="color: #4CAF50;">
+                  <span>Discount</span>
+                  <span>- ₹${(Math.max(0, order.items.reduce((acc, item) => acc + ((item.price || 0) * item.qty), 0) - (order.totalPrice - (order.shippingPrice || 0)))).toFixed(2)}</span>
+                </div>
+                <div class="summary-row total-row">
+                  <span>Total</span>
+                  <span>₹${(order.totalPrice || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for shopping with CrackerShop!</p>
+              <p>For support, contact us at support@crackershop.com</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to generate invoice. Please try again.");
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -151,7 +284,7 @@ export default function OrderDetail() {
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Items Total</Text>
-              <Text style={styles.summaryValue}>₹{formatCurrency(order.totalPrice - (order.shippingPrice || 0))}</Text>
+              <Text style={styles.summaryValue}>₹{formatCurrency(order.items.reduce((acc, item) => acc + ((item.price || 0) * item.qty), 0))}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Delivery Fee</Text>
@@ -159,7 +292,9 @@ export default function OrderDetail() {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Discount</Text>
-              <Text style={[styles.summaryValue, { color: THEME.colors.success }]}>- ₹0.00</Text>
+              <Text style={[styles.summaryValue, { color: THEME.colors.success }]}>
+                - ₹{formatCurrency(Math.max(0, order.items.reduce((acc, item) => acc + ((item.price || 0) * item.qty), 0) - (order.totalPrice - (order.shippingPrice || 0))))}
+              </Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Grand Total</Text>
@@ -183,7 +318,7 @@ export default function OrderDetail() {
             <Text style={styles.reorderBtnText}>Reorder Items</Text>
           </Button>
 
-          <TouchableOpacity style={styles.downloadInvoice}>
+          <TouchableOpacity style={styles.downloadInvoice} onPress={handleDownloadInvoice}>
             <Ionicons name="download-outline" size={18} color={THEME.colors.subtext} />
             <Text style={styles.downloadText}>Download Invoice</Text>
           </TouchableOpacity>

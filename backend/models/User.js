@@ -36,24 +36,19 @@ const UserSchema = new mongoose.Schema({
         type: String
     },
     mobileNumber: {
-        type: String,
-        required: [true, 'Please add a mobile number']
+        type: String
     },
     address: {
-        type: String,
-        required: [true, 'Please add an address']
+        type: String
     },
     pincode: {
-        type: String,
-        required: [true, 'Please add a pincode']
+        type: String
     },
     district: {
-        type: String,
-        required: [true, 'Please add a district']
+        type: String
     },
     state: {
-        type: String,
-        required: [true, 'Please add a state']
+        type: String
     },
     addresses: [
         {

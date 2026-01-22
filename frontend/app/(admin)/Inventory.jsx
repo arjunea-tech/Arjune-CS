@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState, useMemo } from 'react';
@@ -9,7 +8,9 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    ActivityIndicator
+    ActivityIndicator,
+    Image,
+    Alert
 } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
 import { productsAPI } from '../../Components/api';
@@ -77,12 +78,11 @@ export default function Inventory() {
             }
 
             if (activeFilter === 'Low Stock') {
-                // Assuming low stock threshold is 10 or check logic
-                return (item.stock < 10 && item.stock > 0) && matchesSearch;
+                return (item.quantity < 10 && item.quantity > 0) && matchesSearch;
             }
 
             if (activeFilter === 'Out of Stock') {
-                return item.stock === 0 && matchesSearch;
+                return (item.quantity === 0) && matchesSearch;
             }
 
             return matchesSearch;
@@ -116,18 +116,45 @@ export default function Inventory() {
 
     const renderShowing = ({ item }) => {
         if (!item) return null;
-        const isOutOfStock = (item.stock === 0 || item.quantity === 0);
+        const isOutOfStock = (item.quantity === 0);
 
         return (
             <View className="mb-4 flex-row items-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
                 {/* Image */}
                 <View className="relative h-20 w-20">
-                    <Image
-                        source={{ uri: resolveImageUrl(item.image) }}
-                        className={`h-full w-full rounded-xl ${isOutOfStock ? 'opacity-50' : ''}`}
-                        contentFit="cover"
-                        transition={200}
-                    />
+                    {(() => {
+                        // Aggressively search for a valid image path
+                        let imgUri = null;
+
+                        // Check main image field
+                        if (item.image && typeof item.image === 'string' && !item.image.includes('no-image.jpg')) {
+                            imgUri = item.image;
+                        }
+                        // Fallback to images array
+                        else if (item.images && Array.isArray(item.images) && item.images.length > 0) {
+                            const firstValid = item.images.find(img => img && typeof img === 'string' && !img.includes('no-image.jpg'));
+                            if (firstValid) imgUri = firstValid;
+                        }
+
+                        if (imgUri) {
+                            return (
+                                <Image
+                                    source={{ uri: resolveImageUrl(imgUri) }}
+                                    className={`h-full w-full rounded-xl ${isOutOfStock ? 'opacity-50' : ''}`}
+                                    resizeMode="cover"
+                                />
+                            );
+                        }
+
+                        // Default to gray box if no valid image string is found
+                        return <View className={`h-full w-full rounded-xl bg-gray-200 ${isOutOfStock ? 'opacity-50' : ''}`} />;
+                    })()}
+
+                    {item.isDiwaliSpecial && (
+                        <View className="absolute top-1 right-1 rounded bg-orange-600 px-1.5 py-0.5 border border-white shadow-sm">
+                            <Text className="text-[8px] font-bold text-white">🪔 SPECIAL</Text>
+                        </View>
+                    )}
 
                     {item.sku && (
                         <View className="absolute bottom-1 left-1 rounded bg-black/70 px-1 py-0.5">
@@ -160,7 +187,7 @@ export default function Inventory() {
 
                         {!isOutOfStock && (
                             <View className="rounded px-2 py-0.5 bg-green-100">
-                                <Text className="text-[10px] font-bold text-green-700">In Stock ({item.stock || item.quantity})</Text>
+                                <Text className="text-[10px] font-bold text-green-700">In Stock ({item.quantity})</Text>
                             </View>
                         )}
 

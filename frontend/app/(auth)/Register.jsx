@@ -55,14 +55,28 @@ export default function Register() {
     try {
       setLoading(true);
       const formData = new FormData();
+      
+      // Required fields only
       formData.append('name', values.fullName);
       formData.append('email', values.email);
       formData.append('password', values.password);
-      formData.append('mobileNumber', values.mobileNumber);
-      formData.append('address', values.address);
-      formData.append('pincode', values.pincode);
-      formData.append('district', values.district);
-      formData.append('state', values.state);
+      
+      // Optional fields - only append if they have values
+      if (values.mobileNumber && values.mobileNumber.trim()) {
+        formData.append('mobileNumber', values.mobileNumber);
+      }
+      if (values.address && values.address.trim()) {
+        formData.append('address', values.address);
+      }
+      if (values.pincode && values.pincode.trim()) {
+        formData.append('pincode', values.pincode);
+      }
+      if (values.district && values.district.trim()) {
+        formData.append('district', values.district);
+      }
+      if (values.state && values.state.trim()) {
+        formData.append('state', values.state);
+      }
 
       if (values.avatar) {
         const localUri = values.avatar;
@@ -72,14 +86,25 @@ export default function Register() {
         formData.append('avatar', { uri: localUri, name: filename, type });
       }
 
+      console.log('[REGISTER] Attempting registration with:', { name: values.fullName, email: values.email });
+      
       const res = await authAPI.register(formData);
       if (res.success) {
+        console.log('[REGISTER] Success');
         Alert.alert('Registration Successful', `Welcome, ${values.fullName}!`);
         router.replace('/(auth)/Login');
+      } else {
+        const errorMsg = res.error || 'Registration failed';
+        console.error('[REGISTER] Error:', errorMsg);
+        Alert.alert('Error', errorMsg);
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      Alert.alert('Error', error.response?.data?.error || 'Registration failed');
+      console.error('[REGISTER] Exception:', error.message);
+      let errorMessage = error.response?.data?.error || error.message || 'Registration failed';
+      if (error.response?.data?.details) {
+        errorMessage = error.response.data.details.map(d => `${d.field}: ${d.message}`).join('\n');
+      }
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
