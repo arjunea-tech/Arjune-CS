@@ -88,7 +88,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="person"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="Full Name"
             value={values.fullName}
             onChangeText={handleChange('fullName')}
@@ -98,7 +98,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="mail"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="Email Address"
             value={values.email}
             onChangeText={handleChange('email')}
@@ -110,7 +110,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="call"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="Mobile Number"
             value={values.mobileNumber}
             onChangeText={handleChange('mobileNumber')}
@@ -121,7 +121,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="location"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="Address (House No, Street...)"
             value={values.address}
             onChangeText={handleChange('address')}
@@ -134,7 +134,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             <View style={{ flex: 1, marginRight: 10 }}>
               <InputField
                 icon="pin"
-                iconColor="#FF6B35"
+                iconColor="#FF7F00"
                 placeholder="Pincode"
                 value={values.pincode}
                 onChangeText={async (pin) => {
@@ -161,7 +161,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             <View style={{ flex: 1 }}>
               <InputField
                 icon="business"
-                iconColor="#FF6B35"
+                iconColor="#FF7F00"
                 placeholder="District"
                 value={values.district}
                 onChangeText={handleChange('district')}
@@ -173,7 +173,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="earth"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="State"
             value={values.state}
             onChangeText={handleChange('state')}
@@ -183,7 +183,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="lock-closed"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             isPassword
             placeholder="Password"
             value={values.password}
@@ -194,7 +194,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 
           <InputField
             icon="lock-closed"
-            iconColor="#FF6B35"
+            iconColor="#FF7F00"
             placeholder="Confirm Password"
             value={values.confirmPassword}
             onChangeText={handleChange('confirmPassword')}
@@ -207,7 +207,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             <Checkbox
               value={agree}
               onValueChange={setAgree}
-              color={agree ? '#FF4444' : undefined}
+              color={agree ? '#FF7F00' : undefined}
               style={styles.checkbox}
             />
             <Text style={styles.termsText}>
@@ -243,43 +243,47 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 32,
+    borderRadius: 20,
+    padding: 24,
     width: width - 40,
     maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowColor: '#FF7F00',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
     marginBottom: 20,
+    borderTopWidth: 4,
+    borderTopColor: '#FF7F00',
   },
   cardTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
+    color: '#FF7F00',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
+    fontWeight: '500',
   },
   avatarRow: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 18,
   },
   avatarContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#F5F5F5',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FFF3E0',
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#EEE',
+    borderWidth: 3,
+    borderColor: '#FF7F00',
     borderStyle: 'dashed',
   },
   avatar: {
@@ -292,39 +296,43 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 11,
-    color: '#999',
-    marginTop: 2,
+    color: '#FF7F00',
+    marginTop: 4,
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   errorText: {
-    color: '#FF4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 5,
+    color: '#E53935',
+    fontSize: 11,
+    marginTop: 3,
+    marginLeft: 8,
+    fontWeight: '500',
   },
   termsContainer: {
     flexDirection: 'row',
-    marginTop: 15,
+    marginTop: 16,
+    marginBottom: 16,
     alignItems: 'flex-start',
   },
   checkbox: {
-    marginRight: 8,
-    width: 16,
-    height: 16,
+    marginRight: 10,
+    width: 18,
+    height: 18,
   },
   termsText: {
     fontSize: 12,
-    color: '#888',
+    color: '#666',
     flex: 1,
+    lineHeight: 18,
   },
   link: {
-    color: '#FF6B35',
-    fontWeight: 'bold',
+    color: '#FF7F00',
+    fontWeight: '700',
   },
   googleBtn: {
-    backgroundColor: '#FF4444',
+    backgroundColor: '#FF7F00',
   }
 });

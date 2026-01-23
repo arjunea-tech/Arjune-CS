@@ -39,14 +39,17 @@ export function CustomButton({
 
 const styles = StyleSheet.create({
   primaryButton: {
-    backgroundColor: '#FF4444',
+    backgroundColor: '#FF7F00',
     borderRadius: 10,
     paddingVertical: 14,
-    shadowColor: '#FF4444',
+    shadowColor: '#FF7F00',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryButtonText: {
     color: '#FFF',
@@ -55,13 +58,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   googleButton: {
-    backgroundColor: '#FF4444',
+    backgroundColor: '#FF7F00',
     borderRadius: 10,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF4444',
+    shadowColor: '#FF7F00',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

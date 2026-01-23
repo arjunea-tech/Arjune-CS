@@ -21,6 +21,12 @@ export default function OrderSummary({ totals = {}, onProceed = () => { }, butto
                     <Text style={styles.label}>Delivery Fee</Text>
                     <Text style={styles.value}>{totals.shipping === 0 ? 'Free' : `₹${formatCurrency(totals.shipping ?? 0)}`}</Text>
                 </View>
+                {(totals.otherFees > 0) && (
+                    <View style={styles.row}>
+                        <Text style={styles.label}>Additional Fees</Text>
+                        <Text style={styles.value}>₹{formatCurrency(totals.otherFees ?? 0)}</Text>
+                    </View>
+                )}
 
                 <View style={[styles.row, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Grand Total</Text>

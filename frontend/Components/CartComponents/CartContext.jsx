@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import settingsAPI from '../api/settings';
 
 const CartContext = createContext(null);
 
@@ -9,6 +10,33 @@ export function CartProvider({ children }) {
   const initial = [];
 
   const [cartItems, setCartItems] = useState(initial);
+  const [shippingSettings, setShippingSettings] = useState({
+    baseFee: 50,
+    freeShippingAbove: 500,
+    packagingFee: 0,
+    handlingFee: 0
+  });
+
+  // Fetch shipping settings on mount
+  useEffect(() => {
+    const fetchShippingSettings = async () => {
+      try {
+        const res = await settingsAPI.getSettings();
+        if (res.success && res.data?.shipping) {
+          setShippingSettings({
+            baseFee: res.data.shipping.baseFee || 50,
+            freeShippingAbove: res.data.shipping.freeShippingAbove || 500,
+            packagingFee: res.data.fees?.packagingFee || 0,
+            handlingFee: res.data.fees?.handlingFee || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching shipping settings:', error);
+        // Use defaults if error
+      }
+    };
+    fetchShippingSettings();
+  }, []);
 
   const addItem = React.useCallback((product, qty = 1) => {
     if (!product) return;
@@ -62,17 +90,19 @@ export function CartProvider({ children }) {
     }, 0);
 
     const discount = itemsTotal - discountedTotal;
-    const shipping = discountedTotal > 0 ? (discountedTotal >= 500 ? 0 : 50) : 0;
-    const grandTotal = Math.round(discountedTotal + shipping);
+    const shipping = discountedTotal > 0 ? (discountedTotal >= shippingSettings.freeShippingAbove ? 0 : shippingSettings.baseFee) : 0;
+    const otherFees = (shippingSettings.packagingFee || 0) + (shippingSettings.handlingFee || 0);
+    const grandTotal = Math.round(discountedTotal + shipping + otherFees);
 
     return {
       itemsTotal,
       subtotal: itemsTotal, // Displayed as Items Total
       discount,
       shipping,
+      otherFees,
       grandTotal
     };
-  }, [cartItems]);
+  }, [cartItems, shippingSettings]);
 
   const value = useMemo(() => ({
     cartItems,

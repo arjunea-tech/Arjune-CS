@@ -1,32 +1,40 @@
 ############################
-# Node / Express
+# Node / Express & NPM
 ############################
 node_modules/
+package-lock.json
 npm-debug.log*
+npm-err.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
 
 ############################
-# Environment variables
+# Environment variables - CRITICAL
 ############################
 .env
 .env.local
+.env.*.local
 .env.development
 .env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
 ############################
-# React Native
+# React Native & Expo
 ############################
 # Expo
 .expo/
 .expo-shared/
+.expo-config.*
 
 # React Native build
 android/app/build/
 android/build/
+android/.gradle/
 ios/build/
-
-# CocoaPods
 ios/Pods/
 ios/Podfile.lock
 
@@ -34,34 +42,187 @@ ios/Podfile.lock
 .gradle/
 local.properties
 
+# CocoaPods
+Pods/
+*.xcworkspace/
+
+# Native & Build
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+
 ############################
-# Cache & Temp files
+# Logs & Debugging
+############################
+logs/
+logs/*
+!logs/.gitkeep
+*.log
+*.log.*
+lerna-debug.log*
+debug.log
+
+############################
+# Cache & Temporary Files
 ############################
 .cache/
+.cache/*
+!.cache/.gitkeep
 .tmp/
-*.log
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+~*
+.#*
 
 ############################
-# IDE & OS
+# IDE & Editor Configuration
 ############################
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
+.idea/*
+!.idea/.gitkeep
 *.iml
-.DS_Store
-Thumbs.db
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
 
 ############################
-# Coverage & Reports
+# Operating System Files
+############################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+Thumbs.db
+System Volume Information/
+$RECYCLE.BIN/
+
+############################
+# Build & Distribution
+############################
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+############################
+# Testing & Coverage
 ############################
 coverage/
+.nyc_output/
+test-results/
+*.lcov
 
 ############################
-# Metro bundler
+# Security & Sensitive Data
+############################
+.env*
+.secrets/
+secrets/
+private/
+*.pem
+*.key
+*.cert
+*.crt
+.vault/
+
+############################
+# Database & Local Storage
+############################
+*.sqlite
+*.sqlite3
+*.db
+mongodb/
+data/
+
+############################
+# Package Manager Lock Files
+############################
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+############################
+# Upload & Temporary Directories
+############################
+uploads/
+uploads/*
+!uploads/.gitkeep
+temp/
+temp/*
+!temp/.gitkeep
+
+############################
+# Metro Bundler
 ############################
 .metro-health-check*
 
 ############################
-# Optional
+# Build Artifacts
 ############################
 *.apk
 *.aab
+*.ipa
+*.app
+
+############################
+# Certificates & Keys
+############################
+*.pem
+*.key
+*.cert
+*.crt
+certs/
+keys/
+
+############################
+# Compiled & Generated Files
+############################
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.jar
+
+############################
+# TypeScript
+############################
+*.tsbuildinfo
+tsconfig*.json.bak
+
+############################
+# Yarn Specific
+############################
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+############################
+# Project Specific
+############################
+ecosystem.config.js.backup
+.pm2/
+cloudinary-temp/
+image-uploads-temp/
+

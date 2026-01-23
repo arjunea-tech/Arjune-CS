@@ -14,6 +14,7 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
         itemsPrice,
         taxPrice,
         shippingPrice,
+        otherFees,
         discountPrice,
         totalPrice
     } = req.body;
@@ -28,7 +29,9 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
             paymentMethod,
             itemsPrice,
             taxPrice,
+            taxPrice,
             shippingPrice,
+            otherFees: otherFees || 0,
             discountPrice: discountPrice || 0,
             totalPrice
         });
@@ -96,7 +99,7 @@ exports.getMyOrders = asyncHandler(async (req, res, next) => {
 // @access  Private/Admin
 exports.getOrders = asyncHandler(async (req, res, next) => {
     const { page = 1, limit = 10, status, sortBy = '-createdAt' } = req.query;
-    
+
     const filter = {};
     if (status) filter.orderStatus = status;
 

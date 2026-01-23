@@ -52,18 +52,9 @@ export default function ManageShippingFees() {
     const handleSave = async () => {
         try {
             setSaving(true);
-            const res = await settingsAPI.getSettings();
-            if (res.success) {
-                // Update all settings at once
-                await settingsAPI.updateSettings ? 
-                    settingsAPI.updateSettings(data) :
-                    Promise.all([
-                        settingsAPI.updateShipping(data.shipping),
-                        settingsAPI.updateFees(data.fees),
-                        settingsAPI.updateOrderSettings(data.orderSettings)
-                    ]);
-                Alert.alert('Success', 'Shipping, fees and order settings updated successfully');
-            }
+            // Use the new updateSettings method to update all settings at once
+            await settingsAPI.updateSettings(data);
+            Alert.alert('Success', 'Shipping, fees and order settings updated successfully');
         } catch (error) {
             console.error('Error saving settings:', error);
             Alert.alert('Error', error.response?.data?.message || 'Failed to save');
@@ -174,7 +165,7 @@ export default function ManageShippingFees() {
                     <View className="mb-4">
                         <Text className="mb-2 text-sm font-bold text-gray-700">Packaging Fee (₹)</Text>
                         <View className="flex-row items-center rounded-xl border border-gray-200 bg-white px-4 py-3">
-                            <Ionicons name="box-outline" size={20} color="#FF7F00" style={{ marginRight: 12 }} />
+                            <Ionicons name="cube-outline" size={20} color="#FF7F00" style={{ marginRight: 12 }} />
                             <TextInput
                                 style={{ flex: 1 }}
                                 placeholder="0"

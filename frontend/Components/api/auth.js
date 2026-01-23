@@ -96,6 +96,20 @@ const authAPI = {
             throw error;
         }
     },
+
+    // Change password (for authenticated users)
+    changePassword: async (currentPassword, newPassword, confirmPassword) => {
+        try {
+            const response = await api.put('/auth/change-password', {
+                currentPassword,
+                newPassword,
+                confirmPassword
+            });
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    }
 };
 
 export default authAPI;

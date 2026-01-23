@@ -84,9 +84,10 @@ export default function Settings() {
                             onPress={() => router.push('/EditProfile')}
                         />
                         <SettingItem
-                            icon={<Ionicons name="lock-closed-outline" size={20} color="#4B5563" />}
+                            icon={<Ionicons name="lock-closed-outline" size={20} color="#FF7F00" />}
                             label="Change Password"
-                            onPress={() => router.push('/(auth)/ForgetPassword')}
+                            subLabel="Update your password"
+                            onPress={() => router.push('/(admin)/ChangePassword')}
                         />
                     </View>
                 </View>

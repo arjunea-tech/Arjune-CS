@@ -7,6 +7,7 @@ import { settingsAPI } from "../Components/api";
 export default function AboutUs() {
   const navigation = useNavigation();
   const [aboutUs, setAboutUs] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,9 +17,13 @@ export default function AboutUs() {
   const fetchAboutUs = async () => {
     try {
       setLoading(true);
-      const res = await settingsAPI.getAboutUs();
-      if (res.success) {
-        setAboutUs(res.data);
+      const resAbout = await settingsAPI.getAboutUs();
+      const resSettings = await settingsAPI.getSettings();
+      if (resAbout.success) {
+        setAboutUs(resAbout.data);
+      }
+      if (resSettings.success) {
+        setSettings(resSettings.data);
       }
     } catch (error) {
       console.error('Error fetching About Us:', error);
@@ -76,7 +81,7 @@ export default function AboutUs() {
           {data.mission && (
             <View style={styles.sectionBox}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="target" size={20} color="#FF7F00" />
+                <Ionicons name="checkmark-circle" size={20} color="#FF7F00" />
                 <Text style={styles.sectionTitle}>Our Mission</Text>
               </View>
               <Text style={styles.sectionText}>{data.mission}</Text>
@@ -87,7 +92,7 @@ export default function AboutUs() {
           {data.vision && (
             <View style={styles.sectionBox}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="eye" size={20} color="#FF7F00" />
+                <Ionicons name="eye-outline" size={20} color="#FF7F00" />
                 <Text style={styles.sectionTitle}>Our Vision</Text>
               </View>
               <Text style={styles.sectionText}>{data.vision}</Text>
@@ -98,30 +103,38 @@ export default function AboutUs() {
         {/* Contact Section */}
         <View style={styles.contactCard}>
           <Text style={styles.contactTitle}>Contact Us</Text>
-          <InfoRow icon="call-outline" label="Mobile" value="+91 98765 43210" />
-          <InfoRow
-            icon="home-outline"
-            label="Address"
-            value="No.12, Main Road, Sivakasi"
-          />
-          <InfoRow
-            icon="business-outline"
-            label="District"
-            value="Virudhunagar"
-          />
-          <InfoRow icon="map-outline" label="State" value="Tamil Nadu" />
-          <InfoRow icon="mail-outline" label="Pincode" value="626123" />
+          {settings?.contact?.phone && (
+            <InfoRow icon="call-outline" label="Mobile" value={settings.contact.phone} />
+          )}
+          {settings?.contact?.address && (
+            <InfoRow
+              icon="home-outline"
+              label="Address"
+              value={settings.contact.address}
+            />
+          )}
+          {settings?.contact?.email && (
+            <InfoRow icon="mail-outline" label="Email" value={settings.contact.email} />
+          )}
 
+          {/* View Location Button */}
           <TouchableOpacity
             style={styles.mapBtn}
-            onPress={() =>
-              Linking.openURL(
-                "https://www.google.com/maps/search/?api=1&query=Sivakasi+Tamil+Nadu"
-              )
-            }
+            onPress={() => {
+              // Use coordinates if available, otherwise fall back to address
+              if (settings?.contact?.latitude && settings?.contact?.longitude) {
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${settings.contact.latitude},${settings.contact.longitude}`;
+                Linking.openURL(mapsUrl);
+              } else {
+                const query = encodeURIComponent(settings?.contact?.address || 'Sivakasi Tamil Nadu');
+                Linking.openURL(
+                  `https://www.google.com/maps/search/?api=1&query=${query}`
+                );
+              }
+            }}
           >
             <Ionicons name="navigate-outline" size={18} color="#fff" />
-            <Text style={styles.mapText}>View Location</Text>
+            <Text style={styles.mapText}>View Location on Map</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

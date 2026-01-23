@@ -11,6 +11,16 @@ const settingsAPI = {
         }
     },
 
+    // Update all settings
+    updateSettings: async (data) => {
+        try {
+            const response = await api.put('/settings', data);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Get About Us
     getAboutUs: async () => {
         try {

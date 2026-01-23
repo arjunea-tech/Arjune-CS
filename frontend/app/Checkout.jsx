@@ -72,6 +72,7 @@ export default function Checkout() {
         itemsPrice: totals.subtotal,
         taxPrice: 0, // Calculate tax if needed
         shippingPrice: totals.shipping,
+        otherFees: totals.otherFees,
         discountPrice: totals.discount,
         totalPrice: totals.grandTotal
       };

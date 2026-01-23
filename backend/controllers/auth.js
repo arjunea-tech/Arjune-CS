@@ -6,11 +6,11 @@ const asyncHandler = require('../middleware/async');
 // @access  Public
 exports.register = asyncHandler(async (req, res, next) => {
     console.log('[AUTH] Register request body:', Object.keys(req.body));
-    
+
     if (!req.body || Object.keys(req.body).length === 0) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Request body is empty. Please send name, email, and password.' 
+        return res.status(400).json({
+            success: false,
+            error: 'Request body is empty. Please send name, email, and password.'
         });
     }
 
@@ -29,8 +29,8 @@ exports.register = asyncHandler(async (req, res, next) => {
     // Validate required fields
     if (!name || !email || !password) {
         console.log('[AUTH] Missing required fields:', { hasName: !!name, hasEmail: !!email, hasPassword: !!password });
-        return res.status(400).json({ 
-            success: false, 
+        return res.status(400).json({
+            success: false,
             error: 'Please provide name, email, and password',
             details: [
                 !name && { field: 'name', message: 'Name is required' },
@@ -74,16 +74,16 @@ exports.register = asyncHandler(async (req, res, next) => {
         if (state && state.trim()) userData.state = state;
 
         console.log('[AUTH] Creating user with data:', { name, email, role: userData.role });
-        
+
         const user = await User.create(userData);
         console.log('[AUTH] User created successfully:', user._id);
-        
+
         sendTokenResponse(user, 201, res);
     } catch (error) {
         console.error('[AUTH] Registration error:', error.message);
-        return res.status(400).json({ 
-            success: false, 
-            error: error.message || 'Registration failed' 
+        return res.status(400).json({
+            success: false,
+            error: error.message || 'Registration failed'
         });
     }
 });
@@ -294,32 +294,32 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     const { email, password, resetToken } = req.body;
 
     if (!email || !password || !resetToken) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Please provide email, new password, and reset token' 
+        return res.status(400).json({
+            success: false,
+            error: 'Please provide email, new password, and reset token'
         });
     }
 
     if (password.length < 6) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Password must be at least 6 characters' 
+        return res.status(400).json({
+            success: false,
+            error: 'Password must be at least 6 characters'
         });
     }
 
     // Hash the token
     const hashedToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
 
-    const user = await User.findOne({ 
+    const user = await User.findOne({
         email,
         resetPasswordToken: hashedToken,
         resetPasswordExpire: { $gt: Date.now() }
     });
 
     if (!user) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Invalid or expired reset token' 
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid or expired reset token'
         });
     }
 
@@ -335,14 +335,85 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     });
 });
 
+// @desc    Change password (authenticated user)
+// @route   PUT /api/v1/auth/change-password
+// @access  Private
+exports.changePassword = asyncHandler(async (req, res, next) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+            success: false,
+            error: 'Please provide current password, new password, and confirm password'
+        });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+            success: false,
+            error: 'New password and confirm password do not match'
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            success: false,
+            error: 'New password must be at least 6 characters'
+        });
+    }
+
+    // Get user with password
+    const user = await User.findById(req.user.id).select('+password');
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: 'User not found'
+        });
+    }
+
+    // Verify current password
+    const isPasswordCorrect = await user.matchPassword(currentPassword);
+    if (!isPasswordCorrect) {
+        return res.status(401).json({
+            success: false,
+            error: 'Current password is incorrect'
+        });
+    }
+
+    // Update to new password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Password changed successfully'
+    });
+});
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
     // Create token
     const token = user.getSignedJwtToken();
 
-    res.status(statusCode).json({
-        success: true,
-        token,
-        data: user
-    });
+    const options = {
+        expires: new Date(
+            Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true
+    };
+
+    if (process.env.NODE_ENV === 'production') {
+        options.secure = true;
+    }
+
+    res
+        .status(statusCode)
+        .cookie('token', token, options)
+        .json({
+            success: true,
+            token,
+            data: user
+        });
 };

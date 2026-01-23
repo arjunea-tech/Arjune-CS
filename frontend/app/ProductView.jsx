@@ -11,7 +11,8 @@ import {
   View,
   ActivityIndicator,
   Linking,
-  PixelRatio
+  PixelRatio,
+  useWindowDimensions
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import Carousel from 'react-native-reanimated-carousel';
@@ -23,6 +24,9 @@ import { useCart } from '../Components/CartComponents/CartContext';
 // Helper to extract YouTube video ID
 const getVideoId = (url) => {
   if (!url) return null;
+  // Handle case where url is just the ID
+  if (url.length === 11) return url;
+
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
@@ -42,6 +46,8 @@ export default function ProductView() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const { width: screenWidth } = useWindowDimensions();
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -120,24 +126,42 @@ export default function ProductView() {
         <View style={styles.imageCard}>
           {productImages.length > 0 && productImages[0] ? (
             productImages.length > 1 ? (
-              <Carousel
-                loop
-                width={300}
-                height={260}
-                autoPlay={false}
-                data={productImages}
-                scrollAnimationDuration={1000}
-                renderItem={({ item }) => (
-                  <View>
-                    <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
-                    {product.isDiwaliSpecial && (
-                      <View style={styles.diwaliBadge}>
-                        <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-              />
+              <View>
+                <Carousel
+                  loop
+                  width={screenWidth * 0.9}
+                  height={260}
+                  autoPlay={true}
+                  autoPlayInterval={3000}
+                  data={productImages}
+                  scrollAnimationDuration={1000}
+                  onProgressChange={(_, absoluteProgress) => {
+                    setCarouselIndex(Math.round(absoluteProgress));
+                  }}
+                  renderItem={({ item }) => (
+                    <View style={{ width: screenWidth * 0.9, height: 260 }}>
+                      <Image source={{ uri: resolveImageUrl(item) }} style={styles.fullImage} />
+                      {product.isDiwaliSpecial && (
+                        <View style={styles.diwaliBadge}>
+                          <Text style={styles.diwaliText}>🪔 SPECIAL</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                />
+                {/* Pagination Dots */}
+                <View style={styles.paginationContainer}>
+                  {productImages.map((_, idx) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.dot,
+                        { backgroundColor: idx === carouselIndex ? '#FF7F00' : '#ccc' }
+                      ]}
+                    />
+                  ))}
+                </View>
+              </View>
             ) : (
               <View>
                 <Image source={{ uri: resolveImageUrl(productImages[0]) }} style={styles.fullImage} />
@@ -214,8 +238,17 @@ export default function ProductView() {
               <View style={[styles.videoContainer, { borderWidth: 0, overflow: 'hidden', backgroundColor: '#f5f5f5' }]}>
                 <YoutubePlayer
                   height={220}
+                  width={screenWidth - 40}
                   play={false}
                   videoId={getVideoId(product.videoUrl)}
+                  webViewProps={{
+                    androidLayerType: 'hardware',
+                    startInLoadingState: true
+                  }}
+                  initialPlayerParams={{
+                    preventFullScreen: false,
+                    modestbranding: true
+                  }}
                 />
               </View>
             </>
@@ -370,7 +403,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#ff7f00',
-    alignItems: 'stretch',
+    alignItems: 'center',
     justifyContent: 'center'
   },
   thumbnailContainer: {
@@ -394,5 +427,20 @@ const styles = StyleSheet.create({
   thumbnailImage: {
     width: '100%',
     height: '100%'
+  },
+  paginationContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc'
   }
 });

@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress, resetPassword, forgotPassword } = require('../controllers/auth');
+const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress, resetPassword, forgotPassword, changePassword } = require('../controllers/auth');
 
 const { protect } = require('../middleware/auth');
 const { upload } = require('../utils/storage');
@@ -17,6 +17,7 @@ router.post('/resetpassword', authRateLimiter, resetPassword);
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, upload.single('avatar'), updateDetails);
+router.put('/change-password', protect, changePassword);
 
 // Address routes
 router.post('/addresses', protect, addAddress);

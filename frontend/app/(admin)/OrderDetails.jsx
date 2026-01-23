@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { THEME } from '../../Components/ui/theme';
 import api from '../../Components/api/config';
+import { settingsAPI } from '../../Components/api';
 
 export default function OrderDetails() {
     const router = useRouter();
@@ -12,11 +13,27 @@ export default function OrderDetails() {
     const id = params.id;
     const [order, setOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [descriptions, setDescriptions] = useState({ shipping: '', fees: '' });
     const navigation = useNavigation();
 
     useEffect(() => {
         if (id) fetchOrder();
+        fetchSettings();
     }, [id]);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await settingsAPI.getSettings();
+            if (res.success) {
+                setDescriptions({
+                    shipping: res.data.shipping?.description || 'No description available.',
+                    fees: res.data.fees?.description || 'No description available.'
+                });
+            }
+        } catch (error) {
+            console.log('Failed to fetch settings for descriptions');
+        }
+    };
 
     const fetchOrder = async () => {
         try {
@@ -59,6 +76,7 @@ export default function OrderDetails() {
                 discount: discount > 0 ? `-₹${discount.toFixed(2)}` : `₹0`,
                 tax: `₹${(o.taxPrice || 0).toFixed(2)}`,
                 shipping: `₹${(o.shippingPrice || 0).toFixed(2)}`,
+                otherFees: `₹${(o.otherFees || 0).toFixed(2)}`,
                 total: `₹${(o.totalPrice || 0).toFixed(2)}`
             }
         };
@@ -205,10 +223,30 @@ export default function OrderDetails() {
                         <Text className="text-gray-500">Tax</Text>
                         <Text className="font-medium text-gray-800">{order.payment.tax}</Text>
                     </View>
-                    <View className="flex-row justify-between mb-2">
-                        <Text className="text-gray-500">Shipping</Text>
+                    <TouchableOpacity
+                        className="flex-row justify-between mb-2"
+                        onPress={() => Alert.alert('Shipping Description', descriptions.shipping)}
+                        activeOpacity={0.7}
+                    >
+                        <View className="flex-row items-center">
+                            <Text className="text-gray-500 mr-1">Shipping</Text>
+                            <Ionicons name="information-circle-outline" size={14} color="gray" />
+                        </View>
                         <Text className="font-medium text-gray-800">{order.payment.shipping}</Text>
-                    </View>
+                    </TouchableOpacity>
+                    {order.payment.otherFees !== '₹0.00' && (
+                        <TouchableOpacity
+                            className="flex-row justify-between mb-2"
+                            onPress={() => Alert.alert('Fees Description', descriptions.fees)}
+                            activeOpacity={0.7}
+                        >
+                            <View className="flex-row items-center">
+                                <Text className="text-gray-500 mr-1">Other Fees</Text>
+                                <Ionicons name="information-circle-outline" size={14} color="gray" />
+                            </View>
+                            <Text className="font-medium text-gray-800">{order.payment.otherFees}</Text>
+                        </TouchableOpacity>
+                    )}
                     <View className="h-[1px] bg-gray-100 my-2" />
                     <View className="flex-row justify-between">
                         <Text className="font-bold text-lg text-gray-800">Total</Text>

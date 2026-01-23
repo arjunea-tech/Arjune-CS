@@ -105,7 +105,7 @@ export default function ShippingAndFeesInfo() {
           <View style={styles.card}>
             <View style={styles.row}>
               <View style={styles.rowLabel}>
-                <Ionicons name="box-outline" size={18} color="#FF7F00" />
+                <Ionicons name="cube-outline" size={18} color="#FF7F00" />
                 <Text style={styles.label}>Packaging Fee</Text>
               </View>
               <Text style={styles.value}>₹{fees.packagingFee || 0}</Text>

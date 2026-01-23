@@ -1,0 +1,163 @@
+############################
+# BACKEND SPECIFIC IGNORES
+############################
+
+# Environment files - CRITICAL FOR SECURITY
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+############################
+# Node / NPM
+############################
+node_modules/
+package-lock.json
+npm-debug.log*
+npm-err.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+############################
+# Logs
+############################
+logs/
+logs/*
+!logs/.gitkeep
+*.log
+*.log.*
+
+############################
+# Database
+############################
+# MongoDB local storage
+mongodb/
+data/
+*.sqlite
+*.db
+
+############################
+# Uploads & Temporary Files
+############################
+uploads/
+uploads/*
+!uploads/.gitkeep
+temp/
+tmp/
+*.tmp
+
+############################
+# Cache
+############################
+.cache/
+.cache/*
+!.cache/.gitkeep
+cache/
+.eslintcache
+
+############################
+# IDE & Editor
+############################
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+############################
+# Build & Distribution
+############################
+build/
+dist/
+out/
+.next/
+
+############################
+# Testing
+############################
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+
+############################
+# Certificates & Keys
+############################
+*.pem
+*.key
+*.cert
+*.crt
+certs/
+
+############################
+# OS Specific
+############################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+
+############################
+# Compiled Files
+############################
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.jar
+
+############################
+# Production Backups
+############################
+*.backup
+*.bak
+backup/
+
+############################
+# Docker
+############################
+.dockerignore
+docker-compose.override.yml
+
+############################
+# PM2 Config
+############################
+ecosystem.config.js.backup
+.pm2/
+
+############################
+# Cloudinary Temp
+############################
+cloudinary-temp/
+image-uploads-temp/
+
+############################
+# Sensitive Data
+############################
+.secrets/
+secrets/
+private/
+
+############################
+# System Files
+############################
+System Volume Information/
+$RECYCLE.BIN/
+.vscode-server/
