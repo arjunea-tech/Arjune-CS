@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress, resetPassword } = require('../controllers/auth');
+const { register, login, getMe, updateDetails, addAddress, deleteAddress, setDefaultAddress, resetPassword, forgotPassword } = require('../controllers/auth');
 
 const { protect } = require('../middleware/auth');
 const { upload } = require('../utils/storage');
@@ -11,7 +11,8 @@ const router = express.Router();
 // Apply auth rate limiter to sensitive routes
 router.post('/register', authRateLimiter, upload.single('avatar'), validators.register, validateRequest, register);
 router.post('/login', authRateLimiter, validators.login, validateRequest, login);
-router.post('/resetpassword', authRateLimiter, login); // Password reset endpoint
+router.post('/forgotpassword', authRateLimiter, forgotPassword);
+router.post('/resetpassword', authRateLimiter, resetPassword);
 
 // Protected routes
 router.get('/me', protect, getMe);

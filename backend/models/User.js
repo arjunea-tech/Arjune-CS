@@ -63,8 +63,34 @@ const UserSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    resetPasswordToken: {
+        type: String,
+        default: undefined
+    },
+    resetPasswordExpire: {
+        type: Date,
+        default: undefined
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: {
+        type: String,
+        default: undefined
+    },
+    lastLogin: {
+        type: Date,
+        default: null
     }
 });
+
+// Indexes for better query performance
+UserSchema.index({ email: 1 });
+UserSchema.index({ status: 1 });
+UserSchema.index({ createdAt: -1 });
+UserSchema.index({ role: 1 });
 
 // Encrypt password using bcrypt
 UserSchema.pre('save', async function () {

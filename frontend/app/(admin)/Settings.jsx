@@ -91,6 +91,25 @@ export default function Settings() {
                     </View>
                 </View>
 
+                {/* Content Management */}
+                <View>
+                    <SectionHeader title="Content Management" />
+                    <View className="mx-4 overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
+                        <SettingItem
+                            icon={<Ionicons name="information-circle-outline" size={20} color="#4B5563" />}
+                            label="About Us"
+                            subLabel="Manage company information for users"
+                            onPress={() => router.push('/(admin)/ManageAboutUs')}
+                        />
+                        <SettingItem
+                            icon={<Ionicons name="card-outline" size={20} color="#4B5563" />}
+                            label="Shipping & Fees"
+                            subLabel="Manage shipping charges and fees"
+                            onPress={() => router.push('/(admin)/ManageShippingFees')}
+                        />
+                    </View>
+                </View>
+
 
                 {/* Logout */}
                 <View className="mx-4 mt-8 mb-10">

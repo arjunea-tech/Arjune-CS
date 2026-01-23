@@ -56,7 +56,9 @@ export default function OrderDetail() {
       user: backendOrder.user,
       createdAt: backendOrder.createdAt?.substring(0, 10),
       steps,
-      status
+      status,
+      paymentMethod: backendOrder.paymentMethod || 'Cash on Delivery',
+      isPaid: backendOrder.isPaid || false
     };
   }
 
@@ -149,7 +151,8 @@ export default function OrderDetail() {
               <div class="billing-col text-right">
                 <div class="col-header">Payment Status</div>
                 <div class="address-block">
-                  <span class="address-line"><span style="color: #4CAF50; font-weight: 700;">Online Payment</span></span>
+                  <span class="address-line"><span style="color: #4CAF50; font-weight: 700;">${order.isPaid ? 'Paid' : 'Pending'}</span></span>
+                  <span class="address-line" style="margin-top: 5px; font-size: 13px; color: #666;">Method: ${order.paymentMethod}</span>
                   <span class="address-line" style="margin-top: 5px; font-size: 13px; color: #666;">Order Status: ${order.status}</span>
                 </div>
               </div>

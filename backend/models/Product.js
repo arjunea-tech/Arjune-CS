@@ -66,4 +66,13 @@ const ProductSchema = new mongoose.Schema({
     }
 });
 
+// Indexes for better query performance
+ProductSchema.index({ name: 'text', description: 'text' }); // Text search
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ isFeatured: 1 });
+ProductSchema.index({ isDiwaliSpecial: 1 });
+ProductSchema.index({ status: 1 });
+ProductSchema.index({ sku: 1 });
+ProductSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Product', ProductSchema);

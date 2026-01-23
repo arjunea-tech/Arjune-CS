@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { useCart } from '../Components/CartComponents/CartContext'
 import OrderSummary from '../Components/CartComponents/OrderSummary'
@@ -10,21 +10,48 @@ import Card from '../Components/ui/Card'
 import { THEME } from '../Components/ui/theme'
 import api from '../Components/api/config'
 import { useAuth } from '../Components/utils/AuthContext'
+import { settingsAPI } from '../Components/api'
 import { Modal, FlatList } from 'react-native'
 
 export default function Checkout() {
   const router = useRouter();
   const { user } = useAuth();
   const { totals, clearCart, cartItems } = useCart();
+  const [minimumOrderAmount, setMinimumOrderAmount] = useState(100);
 
   // Initialize address from user data
   const [address, setAddress] = useState(user?.address || '');
   const [editingAddress, setEditingAddress] = useState(false);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
 
+  // Fetch minimum order amount
+  useEffect(() => {
+    const fetchOrderSettings = async () => {
+      try {
+        const res = await settingsAPI.getOrderSettings();
+        if (res.success && res.data?.minimumOrderAmount) {
+          setMinimumOrderAmount(res.data.minimumOrderAmount);
+        }
+      } catch (error) {
+        console.error('Error fetching order settings:', error);
+      }
+    };
+    fetchOrderSettings();
+  }, []);
+
   const placeOrder = async () => {
     if (!cartItems || cartItems.length === 0) {
       Alert.alert('Cart empty', 'Add items to cart before placing an order.');
+      return;
+    }
+
+    // Validate minimum order amount
+    if (totals.grandTotal < minimumOrderAmount) {
+      Alert.alert(
+        'Minimum Order Amount',
+        `Your order must be at least ₹${minimumOrderAmount}. Current total: ₹${totals.grandTotal.toFixed(2)}`,
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -45,6 +72,7 @@ export default function Checkout() {
         itemsPrice: totals.subtotal,
         taxPrice: 0, // Calculate tax if needed
         shippingPrice: totals.shipping,
+        discountPrice: totals.discount,
         totalPrice: totals.grandTotal
       };
 

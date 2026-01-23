@@ -46,19 +46,26 @@ export default function Orders() {
   // Helper to map backend order to UI format
   const mapOrderToUI = (backendOrder) => {
     const status = backendOrder.orderStatus;
+    const isPaid = backendOrder.isPaid;
+    const isDelivered = backendOrder.isDelivered;
+    
     const steps = [
       { key: 'requested', label: 'Requested', date: backendOrder.createdAt?.substring(0, 10), done: true },
-      { key: 'processing', label: 'Processing', date: '', done: ['Processing', 'Shipped'].includes(status) },
-      { key: 'shipped', label: 'Shipped', date: '', done: status === 'Shipped' }
+      { key: 'processing', label: 'Processing', date: '', done: ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
+      { key: 'shipped', label: 'Shipped', date: '', done: ['Shipped', 'Out for Delivery', 'Delivered'].includes(status) },
+      { key: 'delivered', label: 'Delivered', date: backendOrder.deliveredAt?.substring(0, 10), done: isDelivered }
     ];
 
     return {
       _id: backendOrder._id,
       items: backendOrder.orderItems,
       totalPrice: backendOrder.totalPrice,
+      paymentMethod: backendOrder.paymentMethod,
+      isPaid: isPaid,
       createdAt: backendOrder.createdAt?.substring(0, 10),
       steps,
-      status
+      status,
+      isDelivered
     };
   }
 
@@ -96,6 +103,12 @@ export default function Orders() {
               <View style={styles.statusBadge}>
                 <Text style={styles.statusText}>{o.status}</Text>
               </View>
+
+              {o.isPaid && (
+                <View style={[styles.statusBadge, { bottom: 0, right: 0, top: 'auto', backgroundColor: '#E8F5E9', borderBottomLeftRadius: 12, borderTopRightRadius: 0 }]}>
+                  <Text style={[styles.statusText, { color: '#4CAF50' }]}>Paid</Text>
+                </View>
+              )}
 
               <View style={styles.cardContent}>
                 <Ionicons name="receipt-outline" size={24} color={THEME.colors.primary} />

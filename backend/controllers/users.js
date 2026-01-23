@@ -1,16 +1,35 @@
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 
-// @desc      Get all users
+// @desc      Get all users with pagination
 // @route     GET /api/v1/users
 // @access    Private/Admin
 exports.getUsers = async (req, res, next) => {
     try {
-        const users = await User.find().sort({ createdAt: -1 });
+        const { page = 1, limit = 10, role, status, sortBy = '-createdAt' } = req.query;
+        
+        const filter = {};
+        if (role) filter.role = role;
+        if (status) filter.status = status;
+
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
+
+        const users = await User.find(filter)
+            .select('-password')
+            .sort(sortBy)
+            .skip(skip)
+            .limit(limitNum);
+
+        const total = await User.countDocuments(filter);
 
         res.status(200).json({
             success: true,
             count: users.length,
+            total,
+            pages: Math.ceil(total / limitNum),
+            currentPage: pageNum,
             data: users
         });
     } catch (err) {

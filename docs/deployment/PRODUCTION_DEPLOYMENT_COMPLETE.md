@@ -60,7 +60,7 @@ PORT=5000
 HOST=0.0.0.0
 
 # Database
-MONGO_URI=mongodb+srv://username:password@your-cluster.mongodb.net/CrackerShop?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<username>:<password>@<your-cluster>.mongodb.net/CrackerShop?retryWrites=true&w=majority
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name

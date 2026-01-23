@@ -254,14 +254,14 @@ exports.deleteAddress = asyncHandler(async (req, res, next) => {
     }
 });
 
-// @desc    Reset password
-// @route   POST /api/v1/auth/resetpassword
+// @desc    Forgot password - request password reset
+// @route   POST /api/v1/auth/forgotpassword
 // @access  Public
-exports.resetPassword = asyncHandler(async (req, res, next) => {
-    const { email, password } = req.body;
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ success: false, error: 'Please provide email and new password' });
+    if (!email) {
+        return res.status(400).json({ success: false, error: 'Please provide email' });
     }
 
     const user = await User.findOne({ email });
@@ -270,8 +270,63 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
         return res.status(404).json({ success: false, error: 'User not found with this email' });
     }
 
+    // Generate reset token
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    user.resetPasswordToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    await user.save();
+
+    // In production, send email with reset link
+    console.log(`[PASSWORD RESET] Token for ${email}: ${resetToken}`);
+
+    res.status(200).json({
+        success: true,
+        message: 'Password reset link sent to email',
+        token: resetToken // In production, this would only be sent via email
+    });
+});
+
+// @desc    Reset password
+// @route   POST /api/v1/auth/resetpassword
+// @access  Public
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+    const { email, password, resetToken } = req.body;
+
+    if (!email || !password || !resetToken) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Please provide email, new password, and reset token' 
+        });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Password must be at least 6 characters' 
+        });
+    }
+
+    // Hash the token
+    const hashedToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
+
+    const user = await User.findOne({ 
+        email,
+        resetPasswordToken: hashedToken,
+        resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Invalid or expired reset token' 
+        });
+    }
+
     // Update password
     user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
     await user.save();
 
     res.status(200).json({

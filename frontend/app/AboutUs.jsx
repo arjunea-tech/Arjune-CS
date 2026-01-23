@@ -1,9 +1,56 @@
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Linking, StyleSheet, Text, TouchableOpacity, View, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useState, useEffect } from "react";
+import { settingsAPI } from "../Components/api";
 
 export default function AboutUs() {
   const navigation = useNavigation();
+  const [aboutUs, setAboutUs] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAboutUs();
+  }, []);
+
+  const fetchAboutUs = async () => {
+    try {
+      setLoading(true);
+      const res = await settingsAPI.getAboutUs();
+      if (res.success) {
+        setAboutUs(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching About Us:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={26} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>About Us</Text>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#FF7F00" />
+        </View>
+      </View>
+    );
+  }
+
+  const defaultAboutUs = {
+    title: 'CrackerShop',
+    description: 'CrackerShop provides high-quality crackers at affordable prices with safe and fast delivery.',
+    mission: '',
+    vision: ''
+  };
+
+  const data = aboutUs || defaultAboutUs;
 
   return (
     <View style={styles.container}>
@@ -15,40 +62,69 @@ export default function AboutUs() {
         <Text style={styles.headerTitle}>About Us</Text>
       </View>
 
-      {/* CONTENT */}
-      <View style={styles.card}>
-        <Text style={styles.appName}>CrackerShop</Text>
-        <Text style={styles.desc}>
-          CrackerShop provides high-quality crackers at affordable prices with
-          safe and fast delivery.
-        </Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* CONTENT */}
+        <View style={styles.card}>
+          <Text style={styles.appName}>{data.title || 'CrackerShop'}</Text>
+          {data.description && (
+            <Text style={styles.desc}>
+              {data.description}
+            </Text>
+          )}
 
-        <InfoRow icon="call-outline" label="Mobile" value="+91 98765 43210" />
-        <InfoRow
-          icon="home-outline"
-          label="Address"
-          value="No.12, Main Road, Sivakasi"
-        />
-        <InfoRow
-          icon="business-outline"
-          label="District"
-          value="Virudhunagar"
-        />
-        <InfoRow icon="map-outline" label="State" value="Tamil Nadu" />
-        <InfoRow icon="mail-outline" label="Pincode" value="626123" />
+          {/* Mission Section */}
+          {data.mission && (
+            <View style={styles.sectionBox}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="target" size={20} color="#FF7F00" />
+                <Text style={styles.sectionTitle}>Our Mission</Text>
+              </View>
+              <Text style={styles.sectionText}>{data.mission}</Text>
+            </View>
+          )}
 
-        <TouchableOpacity
-          style={styles.mapBtn}
-          onPress={() =>
-            Linking.openURL(
-              "https://www.google.com/maps/search/?api=1&query=Sivakasi+Tamil+Nadu"
-            )
-          }
-        >
-          <Ionicons name="navigate-outline" size={18} color="#fff" />
-          <Text style={styles.mapText}>View Location</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Vision Section */}
+          {data.vision && (
+            <View style={styles.sectionBox}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="eye" size={20} color="#FF7F00" />
+                <Text style={styles.sectionTitle}>Our Vision</Text>
+              </View>
+              <Text style={styles.sectionText}>{data.vision}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Contact Section */}
+        <View style={styles.contactCard}>
+          <Text style={styles.contactTitle}>Contact Us</Text>
+          <InfoRow icon="call-outline" label="Mobile" value="+91 98765 43210" />
+          <InfoRow
+            icon="home-outline"
+            label="Address"
+            value="No.12, Main Road, Sivakasi"
+          />
+          <InfoRow
+            icon="business-outline"
+            label="District"
+            value="Virudhunagar"
+          />
+          <InfoRow icon="map-outline" label="State" value="Tamil Nadu" />
+          <InfoRow icon="mail-outline" label="Pincode" value="626123" />
+
+          <TouchableOpacity
+            style={styles.mapBtn}
+            onPress={() =>
+              Linking.openURL(
+                "https://www.google.com/maps/search/?api=1&query=Sivakasi+Tamil+Nadu"
+              )
+            }
+          >
+            <Ionicons name="navigate-outline" size={18} color="#fff" />
+            <Text style={styles.mapText}>View Location</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -122,6 +198,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#000",
+  },
+
+  contactCard: {
+    backgroundColor: "#fff",
+    margin: 16,
+    padding: 16,
+    borderRadius: 14,
+    elevation: 3,
+    marginBottom: 30,
+  },
+
+  contactTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#ff7f00",
+    marginBottom: 14,
+  },
+
+  sectionBox: {
+    backgroundColor: "#f9f9f9",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#ff7f00",
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#ff7f00",
+    marginLeft: 8,
+  },
+
+  sectionText: {
+    fontSize: 13,
+    color: "#555",
+    lineHeight: 20,
   },
 
   mapBtn: {

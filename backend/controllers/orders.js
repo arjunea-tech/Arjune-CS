@@ -14,6 +14,7 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
         itemsPrice,
         taxPrice,
         shippingPrice,
+        discountPrice,
         totalPrice
     } = req.body;
 
@@ -28,6 +29,7 @@ exports.addOrderItems = asyncHandler(async (req, res, next) => {
             itemsPrice,
             taxPrice,
             shippingPrice,
+            discountPrice: discountPrice || 0,
             totalPrice
         });
 
@@ -93,11 +95,29 @@ exports.getMyOrders = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/orders
 // @access  Private/Admin
 exports.getOrders = asyncHandler(async (req, res, next) => {
-    const orders = await Order.find({}).populate('user');
+    const { page = 1, limit = 10, status, sortBy = '-createdAt' } = req.query;
+    
+    const filter = {};
+    if (status) filter.orderStatus = status;
+
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const orders = await Order.find(filter)
+        .populate('user', 'name email mobileNumber')
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limitNum);
+
+    const total = await Order.countDocuments(filter);
 
     res.status(200).json({
         success: true,
         count: orders.length,
+        total,
+        pages: Math.ceil(total / limitNum),
+        currentPage: pageNum,
         data: orders
     });
 });
@@ -165,6 +185,47 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
         success: true,
+        data: updatedOrder
+    });
+});
+// @desc    Update order payment status (Manual Payment Confirmation)
+// @route   PUT /api/v1/orders/:id/payment
+// @access  Private/Admin
+exports.updatePaymentStatus = asyncHandler(async (req, res, next) => {
+    const { isPaid, paymentMethod } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        return next(new ErrorResponse('Order not found', 404));
+    }
+
+    // Update payment status
+    order.isPaid = isPaid;
+    if (isPaid) {
+        order.paidAt = Date.now();
+    }
+    if (paymentMethod) {
+        order.paymentMethod = paymentMethod;
+    }
+
+    const updatedOrder = await order.save();
+
+    // Notify user about payment confirmation
+    const { createNotification } = require('../utils/notifications');
+    if (isPaid) {
+        createNotification(
+            order.user,
+            'Payment Confirmed ✅',
+            `Payment of ₹${order.totalPrice} for order #${order._id.toString().slice(-6).toUpperCase()} has been confirmed.`,
+            'order',
+            { orderId: order._id }
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message: isPaid ? 'Payment marked as confirmed' : 'Payment status updated',
         data: updatedOrder
     });
 });

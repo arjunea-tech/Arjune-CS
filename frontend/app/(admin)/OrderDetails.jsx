@@ -31,11 +31,8 @@ export default function OrderDetails() {
 
     const mapBackendToUI = (o) => {
         const originalTotal = o.orderItems.reduce((acc, i) => acc + ((i.price || 0) * i.qty), 0);
-        // o.totalPrice is final paid. o.itemsPrice is discounted subtotal.
-        // Discount = Original Total - Discounted Subtotal (itemsPrice)
-        // If itemsPrice is missing, fallback to totalPrice - shipping
-        const discountedSubtotal = o.itemsPrice || (o.totalPrice - (o.shippingPrice || 0));
-        const discount = Math.max(0, originalTotal - discountedSubtotal);
+        // Use discountPrice from backend, or calculate if not available
+        const discount = o.discountPrice || Math.max(0, originalTotal - (o.itemsPrice || 0));
 
         return {
             id: o._id,
@@ -58,11 +55,11 @@ export default function OrderDetails() {
             })),
             payment: {
                 method: o.paymentMethod,
-                subtotal: `₹${originalTotal}`,
-                discount: `-₹${discount}`,
-                tax: `₹${o.taxPrice}`,
-                shipping: `₹${o.shippingPrice}`,
-                total: `₹${o.totalPrice}`
+                subtotal: `₹${originalTotal.toFixed(2)}`,
+                discount: discount > 0 ? `-₹${discount.toFixed(2)}` : `₹0`,
+                tax: `₹${(o.taxPrice || 0).toFixed(2)}`,
+                shipping: `₹${(o.shippingPrice || 0).toFixed(2)}`,
+                total: `₹${(o.totalPrice || 0).toFixed(2)}`
             }
         };
     };
@@ -192,6 +189,10 @@ export default function OrderDetails() {
                 {/* Payment Summary */}
                 <View className="bg-white p-5 rounded-2xl shadow-sm mb-24 border border-gray-100">
                     <Text className="text-sm font-bold text-gray-500 uppercase mb-4">Payment Summary</Text>
+                    <View className="flex-row justify-between mb-4 pb-4 border-b border-gray-100">
+                        <Text className="text-gray-500">Payment Method</Text>
+                        <Text className="font-medium text-gray-800">{order.payment.method || 'Cash on Delivery'}</Text>
+                    </View>
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-gray-500">Items Total</Text>
                         <Text className="font-medium text-gray-800">{order.payment.subtotal}</Text>

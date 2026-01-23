@@ -33,7 +33,12 @@ const chitAPI = {
 
     // Request to join a scheme
     requestJoin: async (details) => {
-        return api.post('/chit/request-join', details);
+        try {
+            const response = await api.post('/chit/request-join', details);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     },
 
     // Pay installment (User self-pay)

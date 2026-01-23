@@ -41,8 +41,8 @@ export default function Home() {
     try {
       setLoading(true);
 
-      // Fetch products
-      const productsResponse = await productsAPI.getProducts();
+      // Fetch products - Get all products with high limit
+      const productsResponse = await productsAPI.getProducts(100, 1);
       if (productsResponse.success) {
         setProducts(productsResponse.data);
       }

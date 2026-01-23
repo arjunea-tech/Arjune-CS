@@ -98,7 +98,9 @@ const auth = require('./routes/auth');
 const orders = require('./routes/orders');
 const users = require('./routes/users');
 const chit = require('./routes/chit');
+const dashboard = require('./routes/dashboard');
 const notifications = require('./routes/notifications');
+const settings = require('./routes/settings');
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -127,8 +129,10 @@ app.use('/api/v1/products', products);
 app.use('/api/v1/banners', banners);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/users', users);
+app.use('/api/v1/dashboard', dashboard);
 app.use('/api/v1/orders', orders);
 app.use('/api/v1/chit', chit);
+app.use('/api/v1/settings', settings);
 
 // 404 handler
 app.use('*', (req, res) => {

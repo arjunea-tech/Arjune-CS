@@ -75,8 +75,10 @@ npm run cluster:dev
 NODE_ENV=production
 ENABLE_CLUSTERING=true
 RATE_LIMIT_MAX_REQUESTS=1000
-MONGO_URI=mongodb+srv://user:password@your-server.mongodb.net/CrackerShop
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/CrackerShop
 ```
+
+> ⚠️ **IMPORTANT**: Replace `<username>`, `<password>`, and `<cluster>` with your actual MongoDB Atlas credentials. Never commit real credentials to version control.
 
 ---
 

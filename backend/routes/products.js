@@ -4,7 +4,8 @@ const {
     getProduct,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    searchProducts
 } = require('../controllers/products');
 
 const { upload } = require('../utils/storage');
@@ -12,6 +13,9 @@ const { protect, authorize } = require('../middleware/auth');
 const { validators, validateRequest } = require('../utils/validation');
 
 const router = express.Router();
+
+// Search route (must be before :id routes)
+router.get('/search/query', searchProducts);
 
 router
     .route('/')

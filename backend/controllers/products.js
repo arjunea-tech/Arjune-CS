@@ -1,14 +1,41 @@
 const Product = require('../models/Product');
 const asyncHandler = require('../middleware/async');
 
-// @desc    Get all products
+// @desc    Get all products with pagination and filtering
 // @route   GET /api/v1/products
 // @access  Public
 exports.getProducts = asyncHandler(async (req, res, next) => {
-    const products = await Product.find().populate('category', 'name');
+    const { page = 1, limit = 10, category, search, featured, sortBy = '-createdAt' } = req.query;
+    
+    // Build filter
+    const filter = {};
+    if (category) filter.category = category;
+    if (search) {
+        filter.$or = [
+            { name: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+        ];
+    }
+    if (featured === 'true') filter.isFeatured = true;
+
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const products = await Product.find(filter)
+        .populate('category', 'name')
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limitNum);
+
+    const total = await Product.countDocuments(filter);
+
     res.status(200).json({
         success: true,
         count: products.length,
+        total,
+        pages: Math.ceil(total / limitNum),
+        currentPage: pageNum,
         data: products
     });
 });
@@ -226,5 +253,37 @@ exports.deleteProduct = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         data: {}
+    });
+});
+// @desc    Search products
+// @route   GET /api/v1/products/search/query
+// @access  Public
+exports.searchProducts = asyncHandler(async (req, res, next) => {
+    const { q, limit = 10 } = req.query;
+
+    if (!q || q.trim().length === 0) {
+        return res.status(400).json({
+            success: false,
+            error: 'Search query is required'
+        });
+    }
+
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+
+    const products = await Product.find({
+        $or: [
+            { name: { $regex: q, $options: 'i' } },
+            { description: { $regex: q, $options: 'i' } },
+            { sku: { $regex: q, $options: 'i' } }
+        ]
+    })
+        .populate('category', 'name')
+        .limit(limitNum);
+
+    res.status(200).json({
+        success: true,
+        count: products.length,
+        query: q,
+        data: products
     });
 });

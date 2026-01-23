@@ -129,8 +129,8 @@ kubectl scale deployment crackershop-api --replicas=10
 NODE_ENV=production
 ENABLE_CLUSTERING=true
 RATE_LIMIT_MAX_REQUESTS=1000
-# Use production MongoDB URI
-MONGO_URI=mongodb+srv://user:password@production-cluster.mongodb.net/CrackerShop
+# Use production MongoDB URI - Replace with your credentials
+MONGO_URI=mongodb+srv://<username>:<password>@<production-cluster>.mongodb.net/CrackerShop
 ```
 
 ### Step 2: Install PM2 Globally

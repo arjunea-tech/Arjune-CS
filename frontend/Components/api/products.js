@@ -2,9 +2,14 @@ import api from './config';
 
 const productsAPI = {
     // Get all products
-    getProducts: async () => {
+    getProducts: async (limit = 100, page = 1) => {
         try {
-            const response = await api.get('/products');
+            const response = await api.get('/products', {
+                params: {
+                    limit,
+                    page
+                }
+            });
             return response.data;
         } catch (error) {
             throw error;

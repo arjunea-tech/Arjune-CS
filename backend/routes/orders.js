@@ -4,7 +4,8 @@ const {
     getOrderById,
     getMyOrders,
     getOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    updatePaymentStatus
 } = require('../controllers/orders');
 
 const router = express.Router();
@@ -22,5 +23,7 @@ router.route('/myorders').get(getMyOrders);
 router.route('/:id').get(getOrderById);
 
 router.route('/:id/status').put(authorize('admin'), updateOrderStatus);
+
+router.route('/:id/payment').put(authorize('admin'), updatePaymentStatus);
 
 module.exports = router;

@@ -48,6 +48,11 @@ const OrderSchema = new mongoose.Schema({
         required: true,
         default: 0.0
     },
+    discountPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
     totalPrice: {
         type: Number,
         required: true,
@@ -80,5 +85,13 @@ const OrderSchema = new mongoose.Schema({
         default: Date.now
     }
 });
+
+// Indexes for better query performance
+OrderSchema.index({ user: 1 });
+OrderSchema.index({ orderStatus: 1 });
+OrderSchema.index({ isPaid: 1 });
+OrderSchema.index({ isDelivered: 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', OrderSchema);
