@@ -1,12 +1,14 @@
 const Product = require('../models/Product');
 const asyncHandler = require('../middleware/async');
+const PDFDocument = require('pdfkit');
+const XLSX = require('xlsx');
 
 // @desc    Get all products with pagination and filtering
 // @route   GET /api/v1/products
 // @access  Public
 exports.getProducts = asyncHandler(async (req, res, next) => {
     const { page = 1, limit = 10, category, search, featured, sortBy = '-createdAt' } = req.query;
-    
+
     // Build filter
     const filter = {};
     if (category) filter.category = category;
@@ -87,9 +89,6 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     if (finalImages.length > 0) {
         cleanData.images = finalImages;
         cleanData.image = finalImages[0];
-    } else {
-        cleanData.image = 'no-image.jpg';
-        cleanData.images = ['no-image.jpg'];
     }
 
     // Sanitize data types
@@ -286,4 +285,113 @@ exports.searchProducts = asyncHandler(async (req, res, next) => {
         query: q,
         data: products
     });
+});
+
+// @desc    Download price list as PDF
+// @route   GET /api/v1/products/download/pdf
+// @access  Public
+exports.downloadPriceListPDF = asyncHandler(async (req, res, next) => {
+    try {
+        const products = await Product.find({ status: 'Active' })
+            .populate('category', 'name')
+            .sort('category');
+
+        const doc = new PDFDocument({ margin: 30 });
+
+        // Finalize headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=CrackerShop_PriceList.pdf');
+
+        doc.pipe(res);
+
+        // Header Title
+        doc.fillColor('#ff7f00').fontSize(24).text('CrackerShop Price List', { align: 'center' });
+        doc.fillColor('#666').fontSize(10).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Table Header Styling
+        const tableTop = 150;
+        doc.fillColor('#000').fontSize(12).font('Helvetica-Bold');
+        doc.text('Category', 50, tableTop);
+        doc.text('Product Name', 150, tableTop);
+        doc.text('Pack', 380, tableTop, { width: 70, align: 'center' });
+        doc.text('Price', 460, tableTop, { width: 100, align: 'right' });
+
+        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+        // Table Content
+        let y = tableTop + 25;
+        doc.font('Helvetica').fontSize(10);
+
+        products.forEach((p, index) => {
+            // Check for page break
+            if (y > 700) {
+                doc.addPage();
+                y = 50; // Reset Y on new page
+            }
+
+            const categoryName = p.category ? p.category.name : 'Uncategorized';
+
+            doc.fillColor(index % 2 === 0 ? '#333' : '#555');
+            doc.text(categoryName, 50, y, { width: 90 });
+            doc.text(p.name, 150, y, { width: 220 });
+            doc.text(p.pack || '-', 380, y, { width: 70, align: 'center' });
+            doc.text(`₹${p.price}`, 460, y, { width: 100, align: 'right' });
+
+            y += 20; // Row height
+        });
+
+        // Footer
+        doc.fontSize(8).fillColor('#999').text('Thank you for shopping with CrackerShop!', 0, 750, { align: 'center' });
+
+        doc.end();
+    } catch (err) {
+        console.error('PDF Generation Error:', err);
+        res.status(500).json({ success: false, error: 'Could not generate PDF' });
+    }
+});
+
+// @desc    Download price list as Excel
+// @route   GET /api/v1/products/download/excel
+// @access  Public
+exports.downloadPriceListExcel = asyncHandler(async (req, res, next) => {
+    try {
+        const products = await Product.find({ status: 'active' })
+            .populate('category', 'name')
+            .sort('category');
+
+        const excelData = products.map(p => ({
+            'Category': p.category ? p.category.name : 'Uncategorized',
+            'Product Name': p.name,
+            'Pack Type': p.pack || 'N/A',
+            'Price (INR)': p.price,
+            'Discount Price': p.discountPrice || '-',
+            'Stock Status': p.quantity > 0 ? 'Available' : 'Out of Stock'
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+        // Format column widths
+        const wscols = [
+            { wch: 20 }, // Category
+            { wch: 40 }, // Name
+            { wch: 15 }, // Pack
+            { wch: 15 }, // Price
+            { wch: 15 }, // Discount
+            { wch: 15 }  // Status
+        ];
+        worksheet['!cols'] = wscols;
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=CrackerShop_Inventory.xlsx');
+        res.status(200).send(buffer);
+
+    } catch (err) {
+        console.error('Excel Generation Error:', err);
+        res.status(500).json({ success: false, error: 'Could not generate Excel' });
+    }
 });

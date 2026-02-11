@@ -13,14 +13,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import SingleChit from "../../Components/ChitComponenets/SingleChit";
 import api from "../../Components/api/config";
+import { Modal } from "react-native";
+import { useAuth } from "../../Components/utils/AuthContext";
 
 export default function Chit() {
+  const { user: profileUser } = useAuth();
   const [openIndex, setOpenIndex] = useState(null);
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('Available'); // Available, MySchemes
   const [schemes, setSchemes] = useState([]);
   const [mySchemes, setMySchemes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedScheme, setSelectedScheme] = useState(null); // For Details Modal
+  const [modalVisible, setModalVisible] = useState(false);
 
   const toggle = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -74,22 +79,7 @@ export default function Chit() {
     });
   };
 
-  const handlePayment = (scheme) => {
-    if (!scheme) return;
-    const myScheme = mySchemes.find(s => s.scheme?._id === scheme._id);
-    const monthIdx = myScheme ? myScheme.monthsPaid : 0;
 
-    router.push({
-      pathname: '/PaymentGateway',
-      params: {
-        schemeId: scheme._id,
-        amount: scheme.installmentAmount,
-        name: scheme.name,
-        monthIndex: monthIdx,
-        type: 'payment'
-      }
-    });
-  };
 
   const renderAvailableSchemes = () => (
     schemes.length === 0 ? (
@@ -113,12 +103,17 @@ export default function Chit() {
     )
   );
 
+  const openSchemeDetails = (item) => {
+    setSelectedScheme(item);
+    setModalVisible(true);
+  };
+
   const renderMySchemes = () => (
     mySchemes.length === 0 ? (
       <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>You haven't joined any schemes yet.</Text>
     ) : (
       mySchemes.map((item, i) => (
-        <View key={i} style={styles.card}>
+        <TouchableOpacity key={i} activeOpacity={0.9} onPress={() => openSchemeDetails(item)} style={styles.card}>
           <Text style={styles.title}>{item.scheme?.name}</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Progress:</Text>
@@ -128,13 +123,32 @@ export default function Chit() {
             <Text style={styles.label}>Total Paid:</Text>
             <Text style={styles.value}>₹{item.totalPaid}</Text>
           </View>
-          {item.scheme?.nextDueDate ? (
+          {item.nextDueDate ? (
             <View style={styles.dueDateContainer}>
-              <Ionicons name="calendar-outline" size={16} color="#d32f2f" />
-              <Text style={styles.dueDateText}>Next due date is: {item.scheme.nextDueDate}</Text>
+              <View style={styles.dateRow}>
+                <Ionicons name="calendar-outline" size={18} color="#d32f2f" />
+                <Text style={styles.dueDateText}>
+                  Due: {new Date(item.nextDueDate).toLocaleDateString()}
+                </Text>
+              </View>
+              {item.daysRemaining !== null && (
+                <View style={[styles.countdownBadge, item.daysRemaining < 5 ? styles.urgentBadge : null]}>
+                  <Text style={[styles.countdownText, item.daysRemaining < 5 ? styles.urgentText : null]}>
+                    {item.daysRemaining > 0 ? `${item.daysRemaining} Days Left` : (item.daysRemaining === 0 ? 'Due Today' : 'Overdue')}
+                  </Text>
+                </View>
+              )}
             </View>
           ) : null}
-        </View>
+
+          <TouchableOpacity
+            style={styles.detailsBtn}
+            onPress={() => openSchemeDetails(item)}
+          >
+            <Ionicons name="information-circle-outline" size={16} color="#ff7f00" />
+            <Text style={styles.detailsBtnText}>View Details</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
       ))
     )
   );
@@ -168,6 +182,88 @@ export default function Chit() {
           activeTab === 'Available' ? renderAvailableSchemes() : renderMySchemes()
         )}
       </ScrollView>
+
+      {/* Detail Modal */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Scheme Details</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginBottom: 20, alignItems: 'center' }}>
+              {selectedScheme?.joinDate && (
+                <Text style={styles.todayDate}>Joining Date: {new Date(selectedScheme.joinDate).toLocaleDateString()}</Text>
+              )}
+
+              {selectedScheme?.nextDueDate && (
+                <Text style={{ color: '#d32f2f', fontSize: 13, marginTop: 4, fontWeight: '600' }}>
+                  Next due date will be after 30 days: {new Date(selectedScheme.nextDueDate).toLocaleDateString()}
+                </Text>
+              )}
+            </View>
+
+            {selectedScheme && (
+              <View style={styles.detailContainer}>
+                <Text style={styles.schemeName}>{selectedScheme.scheme?.name}</Text>
+
+                <View style={styles.detailContainer}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Progress:</Text>
+                    <Text style={styles.detailValue}>{selectedScheme.monthsPaid} / {selectedScheme.scheme?.durationMonths} Months</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Total Paid:</Text>
+                    <Text style={styles.detailValue}>₹{selectedScheme.totalPaid}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Name:</Text>
+                    <Text style={styles.detailValue}>{profileUser?.name || selectedScheme.user?.name}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Mobile:</Text>
+                    <Text style={styles.detailValue}>{profileUser?.mobileNumber || selectedScheme.user?.mobileNumber}</Text>
+                  </View>
+
+                  {selectedScheme.nextDueDate && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>
+                        {(() => {
+                          const nextMonth = (selectedScheme.monthsPaid || 0) + 1;
+                          const getOrdinal = (n) => {
+                            const s = ["th", "st", "nd", "rd"];
+                            const v = n % 100;
+                            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                          };
+                          return `${getOrdinal(nextMonth)} Month Due Date:`;
+                        })()}
+                      </Text>
+                      <Text style={[styles.detailValue, { color: '#d32f2f' }]}>
+                        {new Date(selectedScheme.nextDueDate).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Action Button inside Modal */}
+
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -250,17 +346,145 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   dueDateContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffebee',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 12,
+    justifyContent: 'space-between',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   dueDateText: {
-    marginLeft: 8,
+    marginLeft: 6,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#d32f2f',
   },
+  countdownBadge: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countdownText: {
+    color: '#1976d2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  urgentBadge: {
+    backgroundColor: '#ffebee',
+  },
+  urgentText: {
+    color: '#d32f2f',
+  },
+  detailsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#ff7f00',
+    borderRadius: 8,
+  },
+  detailsBtnText: {
+    color: '#ff7f00',
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+
+  /* Modal Styles */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+    elevation: 5
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ff7f00'
+  },
+  todayDate: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '500'
+  },
+  detailContainer: {
+    paddingHorizontal: 5
+  },
+  section: {
+    marginBottom: 15
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff7f00',
+    paddingLeft: 8
+  },
+  schemeName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500'
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '600'
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 10
+  },
+  payButton: {
+    backgroundColor: '#ff7f00',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20
+  },
+  payButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16
+  }
 });

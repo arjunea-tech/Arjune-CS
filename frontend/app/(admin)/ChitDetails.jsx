@@ -182,6 +182,17 @@ export default function ChitDetails() {
                             style={{ width: `${(item.paidMonths / scheme?.durationMonths) * 100}%` }}
                         />
                     </View>
+
+                    {item.daysRemaining !== null && (
+                        <View className="mt-2 flex-row justify-between items-center bg-gray-50 p-2 rounded">
+                            <Text className="text-xs text-gray-500">
+                                Due: {new Date(item.nextDueDate).toLocaleDateString()}
+                            </Text>
+                            <Text className={`text-xs font-bold ${item.daysRemaining < 5 ? 'text-red-500' : 'text-blue-500'}`}>
+                                {item.daysRemaining > 0 ? `${item.daysRemaining} days left` : 'Overdue'}
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Actions */}

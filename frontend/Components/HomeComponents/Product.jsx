@@ -81,7 +81,7 @@ const Product = ({ product = {}, horizontal = false }) => {
               transition={200}
             />
           )}
-          {product.isDiwaliSpecial && (
+          {!!product.isDiwaliSpecial && (
             <View
               className="absolute top-1 right-1 bg-red-600 px-1.5 py-0.5 rounded-md border border-white"
               style={{ elevation: 2 }}

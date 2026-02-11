@@ -1,8 +1,8 @@
 // Frontend Environment Configuration
 const ENV = {
     dev: {
-        apiUrl: 'http://192.168.1.37:5000/api/v1',
-        uploadUrl: 'http://192.168.1.37:5000/uploads',
+        apiUrl: 'http://192.168.1.41:5000/api/v1',
+        uploadUrl: 'http://192.168.1.41:5000/uploads',
         environment: 'development',
         logLevel: 'debug',
         timeout: 10000

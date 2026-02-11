@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const asyncHandler = require('../middleware/async');
+const axios = require('axios');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -116,6 +119,77 @@ exports.login = asyncHandler(async (req, res, next) => {
     // Check if user is blocked
     if (user.status === 'Blocked') {
         return res.status(403).json({ success: false, error: 'Your account has been blocked. Please contact admin.' });
+    }
+
+    sendTokenResponse(user, 200, res);
+});
+
+// @desc    Google login
+// @route   POST /api/v1/auth/google
+// @access  Public
+exports.googleLogin = asyncHandler(async (req, res, next) => {
+    const { idToken, accessToken } = req.body;
+
+    let email, name, avatar;
+
+    if (idToken) {
+        // Verify ID Token (preferred)
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: [
+                    process.env.GOOGLE_CLIENT_ID,
+                    process.env.GOOGLE_ANDROID_CLIENT_ID,
+                    process.env.GOOGLE_IOS_CLIENT_ID
+                ].filter(Boolean)
+            });
+            const payload = ticket.getPayload();
+            email = payload.email;
+            name = payload.name;
+            avatar = payload.picture;
+        } catch (err) {
+            console.error('[AUTH] Google ID Token verification failed:', err.message);
+            return res.status(401).json({ success: false, error: 'Invalid Google ID token' });
+        }
+    } else if (accessToken) {
+        // Fallback to Access Token (using UserInfo API)
+        try {
+            const response = await axios.get(
+                `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`
+            );
+            email = response.data.email;
+            name = response.data.name;
+            avatar = response.data.picture;
+        } catch (err) {
+            console.error('[AUTH] Google Access Token verification failed:', err.message);
+            return res.status(401).json({ success: false, error: 'Invalid Google access token' });
+        }
+    } else {
+        return res.status(400).json({ success: false, error: 'Please provide a Google token' });
+    }
+
+    if (!email) {
+        return res.status(400).json({ success: false, error: 'Could not retrieve email from Google' });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+        // Create new user if they don't exist
+        user = await User.create({
+            name: name || email.split('@')[0],
+            email,
+            password: Math.random().toString(36).slice(-10), // Random password for OAuth users
+            avatar: avatar || '',
+            role: 'customer',
+            status: 'Active'
+        });
+        console.log('[AUTH] New user created via Google:', user.email);
+    } else if (user.status === 'Blocked') {
+        return res.status(403).json({ success: false, error: 'Your account has been blocked. Please contact admin.' });
+    } else {
+        console.log('[AUTH] User logged in via Google:', user.email);
     }
 
     sendTokenResponse(user, 200, res);

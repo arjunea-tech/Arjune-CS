@@ -73,11 +73,11 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
                         onPress={() => router.push('/Notifications')}
                     >
                         <MaterialCommunityIcons name="bell-outline" size={28} color={COLORS.primary} />
-                        {unreadCount > 0 && (
+                        {unreadCount > 0 ? (
                             <View className="absolute top-1 right-1 bg-orange-600 rounded-full h-5 w-5 items-center justify-center border-2 border-white">
                                 <Text className="text-white text-[10px] font-bold">{unreadCount > 9 ? '9+' : unreadCount}</Text>
                             </View>
-                        )}
+                        ) : null}
                     </TouchableOpacity>
                 </View>
 

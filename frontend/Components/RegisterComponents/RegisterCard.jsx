@@ -94,7 +94,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onChangeText={handleChange('fullName')}
             onBlur={handleBlur('fullName')}
           />
-          {errors.fullName && touched.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+          {errors.fullName && touched.fullName ? <Text style={styles.errorText}>{errors.fullName}</Text> : null}
 
           <InputField
             icon="mail"
@@ -106,7 +106,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          {errors.email && touched.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          {errors.email && touched.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
           <InputField
             icon="call"
@@ -117,7 +117,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onBlur={handleBlur('mobileNumber')}
             keyboardType="phone-pad"
           />
-          {errors.mobileNumber && touched.mobileNumber && <Text style={styles.errorText}>{errors.mobileNumber}</Text>}
+          {errors.mobileNumber && touched.mobileNumber ? <Text style={styles.errorText}>{errors.mobileNumber}</Text> : null}
 
           <InputField
             icon="location"
@@ -128,7 +128,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onBlur={handleBlur('address')}
             multiline
           />
-          {errors.address && touched.address && <Text style={styles.errorText}>{errors.address}</Text>}
+          {errors.address && touched.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
 
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 10 }}>
@@ -156,7 +156,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
                 keyboardType="number-pad"
                 maxLength={6}
               />
-              {errors.pincode && touched.pincode && <Text style={styles.errorText}>{errors.pincode}</Text>}
+              {errors.pincode && touched.pincode ? <Text style={styles.errorText}>{errors.pincode}</Text> : null}
             </View>
             <View style={{ flex: 1 }}>
               <InputField
@@ -167,7 +167,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
                 onChangeText={handleChange('district')}
                 onBlur={handleBlur('district')}
               />
-              {errors.district && touched.district && <Text style={styles.errorText}>{errors.district}</Text>}
+              {errors.district && touched.district ? <Text style={styles.errorText}>{errors.district}</Text> : null}
             </View>
           </View>
 
@@ -179,7 +179,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onChangeText={handleChange('state')}
             onBlur={handleBlur('state')}
           />
-          {errors.state && touched.state && <Text style={styles.errorText}>{errors.state}</Text>}
+          {errors.state && touched.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
 
           <InputField
             icon="lock-closed"
@@ -190,7 +190,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onChangeText={handleChange('password')}
             onBlur={handleBlur('password')}
           />
-          {errors.password && touched.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          {errors.password && touched.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
           <InputField
             icon="lock-closed"
@@ -201,7 +201,7 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             onBlur={handleBlur('confirmPassword')}
             isPassword
           />
-          {errors.confirmPassword && touched.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+          {errors.confirmPassword && touched.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
 
           <View style={styles.termsContainer}>
             <Checkbox
@@ -232,7 +232,6 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             icon="logo-google"
             variant="google"
             onPress={onGoogleLogin}
-            customStyle={styles.googleBtn}
           />
         </View>
       )}
@@ -332,7 +331,4 @@ const styles = StyleSheet.create({
     color: '#FF7F00',
     fontWeight: '700',
   },
-  googleBtn: {
-    backgroundColor: '#FF7F00',
-  }
 });

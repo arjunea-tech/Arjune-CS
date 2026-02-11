@@ -5,7 +5,9 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
-    searchProducts
+    searchProducts,
+    downloadPriceListPDF,
+    downloadPriceListExcel
 } = require('../controllers/products');
 
 const { upload } = require('../utils/storage');
@@ -16,6 +18,10 @@ const router = express.Router();
 
 // Search route (must be before :id routes)
 router.get('/search/query', searchProducts);
+
+// Download routes
+router.get('/download/pdf', downloadPriceListPDF);
+router.get('/download/excel', downloadPriceListExcel);
 
 router
     .route('/')

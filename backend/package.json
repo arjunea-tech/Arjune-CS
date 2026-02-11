@@ -31,6 +31,7 @@
   "license": "ISC",
   "description": "CrackerShop Backend API - Production Grade",
   "dependencies": {
+    "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
@@ -39,6 +40,7 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.0",
+    "google-auth-library": "^10.5.0",
     "helmet": "^7.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
@@ -46,9 +48,11 @@
     "morgan": "^1.10.1",
     "multer": "^1.4.4",
     "multer-storage-cloudinary": "^4.0.0",
+    "pdfkit": "^0.17.2",
+    "pm2": "^5.3.0",
     "winston": "^3.11.0",
-    "xss-clean": "^0.1.4",
-    "pm2": "^5.3.0"
+    "xlsx": "^0.18.5",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

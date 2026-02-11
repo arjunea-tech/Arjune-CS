@@ -12,7 +12,7 @@ import { FireworkDecoration } from '../../Components/LoginComponents/FireworkDec
 import { RegisterCard } from '../../Components/RegisterComponents/RegisterCard';
 import { THEME } from '../../Components/ui/theme';
 import { authAPI } from '../../Components/api';
-import "../../Components/RegisterComponents/RegisterCard"
+import { useAuth } from '../../Components/utils/AuthContext';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 
@@ -22,6 +22,7 @@ import { useState, useEffect } from 'react';
 
 
 export default function Register() {
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -33,17 +34,31 @@ export default function Register() {
   useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
-      handleGoogleSuccess(authentication.accessToken);
+      handleGoogleSuccess({
+        idToken: authentication?.idToken,
+        accessToken: authentication?.accessToken
+      });
     }
   }, [response]);
 
-  const handleGoogleSuccess = async (token) => {
+  const handleGoogleSuccess = async (tokenData) => {
     try {
       setLoading(true);
-      console.log('Google Token:', token);
-      // const res = await authAPI.googleLogin(token);
-      // Handle success redirection...
+      console.log('[GOOGLE REGISTER] Sending Token Data:', tokenData);
+
+      const res = await authAPI.googleLogin(tokenData);
+
+      if (res.success) {
+        await login({
+          token: res.token,
+          ...res.data
+        });
+
+        Alert.alert('Registration Successful', `Welcome ${res.data.name}!`);
+        router.replace('/(tabs)/Home');
+      }
     } catch (error) {
+      console.error('[GOOGLE REGISTER] Error:', error);
       Alert.alert('Google Login Failed', 'Could not authenticate with Google.');
     } finally {
       setLoading(false);
@@ -55,12 +70,12 @@ export default function Register() {
     try {
       setLoading(true);
       const formData = new FormData();
-      
+
       // Required fields only
       formData.append('name', values.fullName);
       formData.append('email', values.email);
       formData.append('password', values.password);
-      
+
       // Optional fields - only append if they have values
       if (values.mobileNumber && values.mobileNumber.trim()) {
         formData.append('mobileNumber', values.mobileNumber);
@@ -87,7 +102,7 @@ export default function Register() {
       }
 
       console.log('[REGISTER] Attempting registration with:', { name: values.fullName, email: values.email });
-      
+
       const res = await authAPI.register(formData);
       if (res.success) {
         console.log('[REGISTER] Success');
@@ -111,7 +126,41 @@ export default function Register() {
   };
 
   const handleGoogleRegister = () => {
-    promptAsync();
+    // Check if real keys are configured
+    const isConfigured = !request?.config?.androidClientId?.includes('YOUR_ANDROID_CLIENT_ID');
+
+    if (!isConfigured) {
+      // Simulation mode
+      Alert.alert(
+        'Google: Choose an account',
+        'Select an account to register with CrackerShop',
+        [
+          {
+            text: 'New User (new@gmail.com)',
+            onPress: async () => {
+              setLoading(true);
+              setTimeout(async () => {
+                await login({
+                  token: 'mock-google-token-new-' + Date.now(),
+                  name: 'New User',
+                  email: 'new@gmail.com',
+                  role: 'customer'
+                });
+                setLoading(false);
+                router.replace('/(tabs)/Home');
+              }, 1000);
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
+    promptAsync().catch(err => {
+      console.error('Google Prompt Error:', err);
+      Alert.alert('Google Error', 'Please check your Client ID configuration.');
+    });
   };
 
 

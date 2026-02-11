@@ -11,7 +11,7 @@ const getBaseURL = () => {
         return 'http://localhost:5000/api/v1';
     }
     // For Physical Device/Emulator
-    return 'http://192.168.1.37:5000/api/v1';
+    return 'http://192.168.1.41:5000/api/v1';
 };
 
 const API_BASE_URL = getBaseURL();
@@ -103,4 +103,5 @@ api.interceptors.response.use(
     }
 );
 
+export { API_BASE_URL };
 export default api;

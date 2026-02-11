@@ -29,8 +29,14 @@ export function CustomButton({
         <ActivityIndicator color="#FFF" size="small" />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={20} color="#FFF" />}
-          <Text style={[textStyle, icon && { marginLeft: 8 }]}>{title}</Text>
+          {icon && (
+            <Ionicons
+              name={icon}
+              size={20}
+              color={variant === 'google' ? '#4285F4' : '#FFF'}
+            />
+          )}
+          <Text style={[textStyle, icon && { marginLeft: 10 }]}>{title}</Text>
         </>
       )}
     </TouchableOpacity>
@@ -58,21 +64,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   googleButton: {
-    backgroundColor: '#FF7F00',
-    borderRadius: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 12,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF7F00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   googleButtonText: {
-    color: '#FFF',
-    fontSize: 15,
+    color: '#333',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

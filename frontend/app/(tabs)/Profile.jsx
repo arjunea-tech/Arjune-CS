@@ -16,6 +16,7 @@ import ProfileAvatar from "../../Components/ProfileComponents/ProfileAvatar";
 import ProfileCard from "../../Components/ProfileComponents/ProfileCard";
 import { useAuth } from "../../Components/utils/AuthContext";
 import { authAPI } from "../../Components/api";
+import { API_BASE_URL } from "../../Components/api/config";
 
 export default function Profile() {
   const navigation = useNavigation();
@@ -105,13 +106,13 @@ export default function Profile() {
           icon: "document-text-outline",
           label: "Download Price List (PDF)",
           onPress: () =>
-            Linking.openURL("https://example.com/pricelist.pdf"),
+            Linking.openURL(`${API_BASE_URL}/products/download/pdf`),
         },
         {
           icon: "download-outline",
           label: "Download Price List (Excel)",
           onPress: () =>
-            Linking.openURL("https://example.com/pricelist.xlsx"),
+            Linking.openURL(`${API_BASE_URL}/products/download/excel`),
         },
       ],
     },

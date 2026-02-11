@@ -10,8 +10,9 @@ export default function SingleChit({
   bonus = "--",
   provided = "--",
   isOpen = false,
-  onToggle = () => {},
-  onJoin = () => {},
+  onToggle = () => { },
+  onJoin = () => { },
+  onViewDetails = () => { },
 }) {
   return (
     <View style={styles.card}>

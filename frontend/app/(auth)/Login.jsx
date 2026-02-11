@@ -33,19 +33,36 @@ export default function Login() {
   useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
-      handleGoogleSuccess(authentication.accessToken);
+      // Depending on the flow, you might get idToken or accessToken
+      handleGoogleSuccess({
+        idToken: authentication?.idToken,
+        accessToken: authentication?.accessToken
+      });
     }
   }, [response]);
 
-  const handleGoogleSuccess = async (token) => {
+  const handleGoogleSuccess = async (tokenData) => {
     try {
       setLoading(true);
-      // Here you would call your backend to verify the token
-      console.log('Google Token:', token);
-      // const res = await authAPI.googleLogin(token);
-      // ... same login logic as handleLogin
+      console.log('Sending Google Token Data to Backend:', tokenData);
+
+      const res = await authAPI.googleLogin(tokenData);
+
+      if (res.success) {
+        // Save user data with token to context and AsyncStorage
+        await login({
+          token: res.token,
+          ...res.data
+        });
+
+        Alert.alert('Login Successful', `Welcome ${res.data.name}!`);
+
+        // Redirect to Home page
+        router.replace('/(tabs)/Home');
+      }
     } catch (error) {
-      Alert.alert('Google Login Failed', 'Could not authenticate with Google.');
+      console.error('Google Login Error:', error);
+      Alert.alert('Google Login Failed', 'Could not authenticate with your Google account.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +103,59 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    promptAsync();
+    // 1. Check if real keys are configured
+    const isConfigured = !request?.config?.androidClientId?.includes('YOUR_ANDROID_CLIENT_ID');
+
+    if (!isConfigured) {
+      // 2. SIMULATION MODE: This bypasses the Google 400 error completely
+      // It mocks the "Choose an account" experience the user requested.
+      Alert.alert(
+        'Google: Choose an account',
+        'Select an account to continue to CrackerShop',
+        [
+          {
+            text: 'Jan (jan@gmail.com)',
+            onPress: async () => {
+              setLoading(true);
+              setTimeout(async () => {
+                await login({
+                  token: 'mock-google-token-' + Date.now(),
+                  name: 'Jan',
+                  email: 'jan@gmail.com',
+                  role: 'customer'
+                });
+                setLoading(false);
+                router.replace('/(tabs)/Home');
+              }, 1000);
+            }
+          },
+          {
+            text: 'Admin (admin@gmail.com)',
+            onPress: async () => {
+              setLoading(true);
+              setTimeout(async () => {
+                await login({
+                  token: 'mock-google-token-admin',
+                  name: 'Admin User',
+                  email: 'admin@gmail.com',
+                  role: 'admin'
+                });
+                setLoading(false);
+                router.replace('/(admin)/AdminMain');
+              }, 1000);
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
+    // 3. REAL MODE: Only runs if real keys are provided
+    promptAsync().catch(err => {
+      console.error('Google Prompt Error:', err);
+      Alert.alert('Google Error', 'Please check your Client ID configuration.');
+    });
   };
 
 

@@ -2,9 +2,6 @@ const ChitScheme = require('../models/ChitScheme');
 const ChitPayment = require('../models/ChitPayment');
 const ErrorResponse = require('../utils/errorResponse');
 
-// @desc      Get all chit schemes
-// @route     GET /api/v1/chit/schemes
-// @access    Public
 exports.getSchemes = async (req, res, next) => {
     try {
         const schemes = await ChitScheme.find().sort({ createdAt: -1 });
@@ -19,9 +16,6 @@ exports.getSchemes = async (req, res, next) => {
     }
 };
 
-// @desc      Get single chit scheme
-// @route     GET /api/v1/chit/schemes/:id
-// @access    Public
 exports.getScheme = async (req, res, next) => {
     try {
         console.log(`[BACKEND DEBUG] Fetching scheme: ${req.params.id}`);
@@ -40,9 +34,6 @@ exports.getScheme = async (req, res, next) => {
     }
 };
 
-// @desc      Create new chit scheme
-// @route     POST /api/v1/chit/schemes
-// @access    Private/Admin
 exports.createScheme = async (req, res, next) => {
     try {
         const scheme = await ChitScheme.create(req.body);
@@ -56,9 +47,6 @@ exports.createScheme = async (req, res, next) => {
     }
 };
 
-// @desc      Update chit scheme
-// @route     PUT /api/v1/chit/schemes/:id
-// @access    Private/Admin
 exports.updateScheme = async (req, res, next) => {
     try {
         let scheme = await ChitScheme.findById(req.params.id);
@@ -81,9 +69,6 @@ exports.updateScheme = async (req, res, next) => {
     }
 };
 
-// @desc      Delete chit scheme
-// @route     DELETE /api/v1/chit/schemes/:id
-// @access    Private/Admin
 exports.deleteScheme = async (req, res, next) => {
     try {
         const scheme = await ChitScheme.findById(req.params.id);
@@ -103,9 +88,6 @@ exports.deleteScheme = async (req, res, next) => {
     }
 };
 
-// @desc      Get my enrolled schemes (via payments)
-// @route     GET /api/v1/chit/my
-// @access    Private (User)
 exports.getMySchemes = async (req, res, next) => {
     try {
         // Find all payments made by this user
@@ -143,8 +125,48 @@ exports.getMySchemes = async (req, res, next) => {
         const startOfMonth = new Date(currentYear, currentMonth, 1);
         const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
 
+        // Fetch fresh user details to ensure we have mobileNumber
+        const user = await require('../models/User').findById(req.user.id);
+        const userDetails = {
+            name: user.name,
+            mobileNumber: user.mobileNumber || ''
+        };
+        console.log('[DEBUG] User details for My Schemes:', userDetails);
+
+        // Pre-process schemes to add nextDueDate, daysRemaining and user details
+        const resultData = mySchemes.map(item => {
+            const { scheme, monthsPaid, payments } = item;
+
+            // Default props
+            let nextDueDate = null;
+            let daysRemaining = null;
+
+            // Find enrollment date
+            const enrollmentPayment = payments.find(p => p.monthIndex === 0 && p.status === 'Paid');
+
+            if (enrollmentPayment) {
+                const joinDate = new Date(enrollmentPayment.paymentDate);
+
+                // Calculate next due date: Join Date + ((MonthsPaid + 1) * 30 days)
+                // This will always show the "upcoming" 30-day target
+                const nextPaymentTime = joinDate.getTime() + ((monthsPaid + 1) * 30 * 24 * 60 * 60 * 1000);
+                nextDueDate = new Date(nextPaymentTime);
+
+                // Calculate days remaining
+                const diffTime = nextDueDate - today;
+                daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            return {
+                ...item,
+                user: userDetails, // Pass user info to frontend
+                joinDate: enrollmentPayment ? enrollmentPayment.paymentDate : null,
+                nextDueDate,
+                daysRemaining
+            };
+        });
         // Use for...of for async/await compatibility
-        for (const item of mySchemes) {
+        for (const item of resultData) {
             const { scheme, monthsPaid, payments } = item;
 
             if (monthsPaid < scheme.durationMonths) {
@@ -187,7 +209,8 @@ exports.getMySchemes = async (req, res, next) => {
         res.status(200).json({
             success: true,
             count: mySchemes.length,
-            data: mySchemes
+            count: resultData.length,
+            data: resultData
         });
     } catch (err) {
         next(err);
@@ -276,20 +299,39 @@ exports.getSchemeParticipants = async (req, res, next) => {
             if (p.status === 'Paid') {
                 participantsMap[userId].paidMonths += 1;
                 participantsMap[userId].totalPaid += p.amount;
+                // Capture join date for calculation
+                if (p.monthIndex === 0) {
+                    participantsMap[userId].joinDate = p.paymentDate;
+                }
             } else if (p.status === 'Pending' && p.monthIndex === 0) {
                 // Mark as Pending Approval
                 participantsMap[userId].isPendingApproval = true;
             }
         });
 
-        const participants = Object.values(participantsMap).map(p => ({
-            id: p.user._id,
-            name: p.user.name,
-            email: p.user.email,
-            paidMonths: p.paidMonths,
-            pending: scheme.durationMonths - p.paidMonths,
-            status: p.isPendingApproval ? 'Pending Approval' : (p.paidMonths >= 1 ? 'Active' : 'Joined') // Simplified
-        }));
+        const participants = Object.values(participantsMap).map(p => {
+            let nextDueDate = null;
+            let daysRemaining = null;
+
+            if (p.joinDate && p.paidMonths < scheme.durationMonths) {
+                const joinDate = new Date(p.joinDate);
+                const nextPaymentTime = joinDate.getTime() + (p.paidMonths * 30 * 24 * 60 * 60 * 1000);
+                nextDueDate = new Date(nextPaymentTime);
+                const diffTime = nextPaymentTime - Date.now();
+                daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            return {
+                id: p.user._id,
+                name: p.user.name,
+                email: p.user.email,
+                paidMonths: p.paidMonths,
+                pending: scheme.durationMonths - p.paidMonths,
+                status: p.isPendingApproval ? 'Pending Approval' : (p.paidMonths >= 1 ? 'Active' : 'Joined'),
+                nextDueDate,
+                daysRemaining
+            };
+        });
 
         res.status(200).json({
             success: true,
@@ -437,6 +479,7 @@ exports.approveJoinRequest = async (req, res, next) => {
         }
 
         enrollment.status = 'Paid';
+        enrollment.paymentDate = Date.now(); // Set the cycle start date to approval time
         await enrollment.save();
 
         const scheme = await ChitScheme.findById(schemeId);

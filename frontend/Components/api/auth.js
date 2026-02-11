@@ -79,9 +79,9 @@ const authAPI = {
         }
     },
     // Google login
-    googleLogin: async (token) => {
+    googleLogin: async (tokenData) => {
         try {
-            const response = await api.post('/auth/google', { token });
+            const response = await api.post('/auth/google', tokenData);
             return response.data;
         } catch (error) {
             throw error;
