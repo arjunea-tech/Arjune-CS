@@ -109,9 +109,12 @@ exports.corsConfig = {
             'http://192.168.1.42:5000',
             'http://192.168.1.42:8081',
             'http://192.168.1.35:5000',
+            'http://192.168.1.45:3000',
+            'http://192.168.1.45:5000',
+            'http://192.168.1.45:8081',
             ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
         ];
-        
+
         // Allow requests without origin (mobile apps, curl, etc)
         if (!origin || allowedOrigins.some(allowed => {
             if (allowed.includes('*')) {

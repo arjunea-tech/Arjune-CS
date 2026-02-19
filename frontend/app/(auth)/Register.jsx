@@ -13,58 +13,12 @@ import { RegisterCard } from '../../Components/RegisterComponents/RegisterCard';
 import { THEME } from '../../Components/ui/theme';
 import { authAPI } from '../../Components/api';
 import { useAuth } from '../../Components/utils/AuthContext';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-
-WebBrowser.maybeCompleteAuthSession();
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 
 export default function Register() {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
-    iosClientId: "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
-    webClientId: "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
-  });
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      handleGoogleSuccess({
-        idToken: authentication?.idToken,
-        accessToken: authentication?.accessToken
-      });
-    }
-  }, [response]);
-
-  const handleGoogleSuccess = async (tokenData) => {
-    try {
-      setLoading(true);
-      console.log('[GOOGLE REGISTER] Sending Token Data:', tokenData);
-
-      const res = await authAPI.googleLogin(tokenData);
-
-      if (res.success) {
-        await login({
-          token: res.token,
-          ...res.data
-        });
-
-        Alert.alert('Registration Successful', `Welcome ${res.data.name}!`);
-        router.replace('/(tabs)/Home');
-      }
-    } catch (error) {
-      console.error('[GOOGLE REGISTER] Error:', error);
-      Alert.alert('Google Login Failed', 'Could not authenticate with Google.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   const handleRegister = async (values) => {
     try {
@@ -125,45 +79,6 @@ export default function Register() {
     }
   };
 
-  const handleGoogleRegister = () => {
-    // Check if real keys are configured
-    const isConfigured = !request?.config?.androidClientId?.includes('YOUR_ANDROID_CLIENT_ID');
-
-    if (!isConfigured) {
-      // Simulation mode
-      Alert.alert(
-        'Google: Choose an account',
-        'Select an account to register with CrackerShop',
-        [
-          {
-            text: 'New User (new@gmail.com)',
-            onPress: async () => {
-              setLoading(true);
-              setTimeout(async () => {
-                await login({
-                  token: 'mock-google-token-new-' + Date.now(),
-                  name: 'New User',
-                  email: 'new@gmail.com',
-                  role: 'customer'
-                });
-                setLoading(false);
-                router.replace('/(tabs)/Home');
-              }, 1000);
-            }
-          },
-          { text: 'Cancel', style: 'cancel' }
-        ]
-      );
-      return;
-    }
-
-    promptAsync().catch(err => {
-      console.error('Google Prompt Error:', err);
-      Alert.alert('Google Error', 'Please check your Client ID configuration.');
-    });
-  };
-
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -184,7 +99,6 @@ export default function Register() {
 
         <RegisterCard
           onRegister={handleRegister}
-          onGoogleLogin={handleGoogleRegister}
           loading={loading}
         />
       </ScrollView>

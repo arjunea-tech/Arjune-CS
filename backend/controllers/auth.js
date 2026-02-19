@@ -367,10 +367,11 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 exports.resetPassword = asyncHandler(async (req, res, next) => {
     const { email, password, resetToken } = req.body;
 
-    if (!email || !password || !resetToken) {
+    // Validate required fields
+    if (!email || !password) {
         return res.status(400).json({
             success: false,
-            error: 'Please provide email, new password, and reset token'
+            error: 'Please provide email and new password'
         });
     }
 
@@ -381,19 +382,25 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
         });
     }
 
-    // Hash the token
-    const hashedToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
+    let user;
 
-    const user = await User.findOne({
-        email,
-        resetPasswordToken: hashedToken,
-        resetPasswordExpire: { $gt: Date.now() }
-    });
+    // 1. If resetToken is provided, use the secure token flow
+    if (resetToken) {
+        const hashedToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
+        user = await User.findOne({
+            email,
+            resetPasswordToken: hashedToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+    } else {
+        // 2. Direct reset flow (Simpler for development/demo)
+        user = await User.findOne({ email });
+    }
 
     if (!user) {
-        return res.status(400).json({
+        return res.status(404).json({
             success: false,
-            error: 'Invalid or expired reset token'
+            error: 'User not found or invalid reset details'
         });
     }
 
@@ -402,6 +409,8 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
+
+    console.log(`[PASSWORD RESET] Successfully reset password for: ${email}`);
 
     res.status(200).json({
         success: true,

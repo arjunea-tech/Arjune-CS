@@ -25,7 +25,7 @@ const ProtectedLayout = () => {
       }
     } else {
       // Authenticated
-      if (inAuthGroup || segments.length === 0 || segments[0] === "index") {
+      if (inAuthGroup) {
         if (isAdmin) {
           router.replace("/(admin)/AdminMain");
         } else {

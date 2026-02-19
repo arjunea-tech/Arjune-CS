@@ -296,6 +296,10 @@ exports.downloadPriceListPDF = asyncHandler(async (req, res, next) => {
             .populate('category', 'name')
             .sort('category');
 
+        if (!products || products.length === 0) {
+            return res.status(404).json({ success: false, error: 'No active products found to generate price list' });
+        }
+
         const doc = new PDFDocument({ margin: 30 });
 
         // Finalize headers for PDF download
@@ -311,38 +315,57 @@ exports.downloadPriceListPDF = asyncHandler(async (req, res, next) => {
 
         // Table Header Styling
         const tableTop = 150;
-        doc.fillColor('#000').fontSize(12).font('Helvetica-Bold');
-        doc.text('Category', 50, tableTop);
-        doc.text('Product Name', 150, tableTop);
-        doc.text('Pack', 380, tableTop, { width: 70, align: 'center' });
-        doc.text('Price', 460, tableTop, { width: 100, align: 'right' });
+        doc.fillColor('#000').fontSize(10).font('Helvetica-Bold');
+        doc.text('Category', 30, tableTop);
+        doc.text('Product Name', 120, tableTop);
+        doc.text('Pack', 320, tableTop, { width: 60, align: 'center' });
+        doc.text('Price', 380, tableTop, { width: 60, align: 'right' });
+        doc.text('Disc.', 445, tableTop, { width: 50, align: 'right' });
+        doc.text('Status', 505, tableTop, { width: 65, align: 'center' });
 
-        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+        doc.moveTo(30, tableTop + 15).lineTo(570, tableTop + 15).stroke();
 
         // Table Content
         let y = tableTop + 25;
-        doc.font('Helvetica').fontSize(10);
+        doc.font('Helvetica').fontSize(9);
 
         products.forEach((p, index) => {
             // Check for page break
-            if (y > 700) {
+            if (y > 720) {
                 doc.addPage();
                 y = 50; // Reset Y on new page
+
+                // Re-draw headers on new page
+                doc.fillColor('#000').fontSize(10).font('Helvetica-Bold');
+                doc.text('Category', 30, y);
+                doc.text('Product Name', 120, y);
+                doc.text('Pack', 320, y, { width: 60, align: 'center' });
+                doc.text('Price', 380, y, { width: 60, align: 'right' });
+                doc.text('Disc.', 445, y, { width: 50, align: 'right' });
+                doc.text('Status', 505, y, { width: 65, align: 'center' });
+                doc.moveTo(30, y + 15).lineTo(570, y + 15).stroke();
+                y += 25;
+                doc.font('Helvetica').fontSize(9);
             }
 
             const categoryName = p.category ? p.category.name : 'Uncategorized';
 
             doc.fillColor(index % 2 === 0 ? '#333' : '#555');
-            doc.text(categoryName, 50, y, { width: 90 });
-            doc.text(p.name, 150, y, { width: 220 });
-            doc.text(p.pack || '-', 380, y, { width: 70, align: 'center' });
-            doc.text(`₹${p.price}`, 460, y, { width: 100, align: 'right' });
+            doc.text(categoryName, 30, y, { width: 85 });
+            doc.text(p.name, 120, y, { width: 195 });
+            doc.text(p.pack || '-', 320, y, { width: 60, align: 'center' });
+            doc.text(`₹${p.price}`, 380, y, { width: 60, align: 'right' });
+            doc.text(p.discountPrice ? `₹${p.discountPrice}` : '-', 445, y, { width: 50, align: 'right' });
+
+            const stockStatus = p.quantity > 0 ? 'In Stock' : 'Out of Stock';
+            doc.fillColor(p.quantity > 0 ? '#2e7d32' : '#c62828');
+            doc.text(stockStatus, 505, y, { width: 65, align: 'center' });
 
             y += 20; // Row height
         });
 
         // Footer
-        doc.fontSize(8).fillColor('#999').text('Thank you for shopping with CrackerShop!', 0, 750, { align: 'center' });
+        doc.fontSize(8).fillColor('#999').text('© CrackerShop - Quality Crackers for Every Occasion', 0, 750, { align: 'center' });
 
         doc.end();
     } catch (err) {
@@ -356,9 +379,13 @@ exports.downloadPriceListPDF = asyncHandler(async (req, res, next) => {
 // @access  Public
 exports.downloadPriceListExcel = asyncHandler(async (req, res, next) => {
     try {
-        const products = await Product.find({ status: 'active' })
+        const products = await Product.find({ status: 'Active' })
             .populate('category', 'name')
             .sort('category');
+
+        if (!products || products.length === 0) {
+            return res.status(404).json({ success: false, error: 'No active products found to generate inventory list' });
+        }
 
         const excelData = products.map(p => ({
             'Category': p.category ? p.category.name : 'Uncategorized',

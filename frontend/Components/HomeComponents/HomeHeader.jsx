@@ -67,7 +67,7 @@ export default function HomeHeader({ searchValue = '', onChangeText = () => { } 
 
                 {/* CONTENT ABOVE LOTTIE */}
                 <View className="flex-row w-full items-center justify-between mt-2">
-                    <Text className="text-white text-2xl font-bold">3BEE CRACKER</Text>
+                    <Text className="text-white text-2xl font-bold">NAME</Text>
                     <TouchableOpacity
                         className="w-12 h-12 bg-white rounded-full items-center justify-center"
                         onPress={() => router.push('/Notifications')}

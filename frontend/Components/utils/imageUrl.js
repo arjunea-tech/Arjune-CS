@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const BASE_URL = 'http://192.168.1.41:5000';
+const BASE_URL = 'http://192.168.1.38:5000';
 
 /**
  * Resolves an image URL from the backend.
@@ -27,7 +27,7 @@ export const resolveImageUrl = (url) => {
     // 3. Handle other full URLs (e.g. external images)
     if (cleanUrl.startsWith('http')) {
         // Still fix localhost or old IPs if present
-        return cleanUrl.replace(/localhost|127\.0\.0\.1|192\.168\.\d+\.\d+/, '192.168.1.41');
+        return cleanUrl.replace(/localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.186\.\d+\.\d+/, '192.168.1.38');
     }
 
     return cleanUrl;

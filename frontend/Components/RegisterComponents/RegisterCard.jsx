@@ -25,7 +25,7 @@ const RegisterSchema = YUP.object().shape({
   state: YUP.string().optional(),
 });
 
-export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
+export function RegisterCard({ onRegister, loading }) {
   const [agree, setAgree] = useState(false);
 
   const pickImage = async (setFieldValue) => {
@@ -223,15 +223,6 @@ export function RegisterCard({ onRegister, onGoogleLogin, loading }) {
             loading={loading}
             disabled={loading}
             customStyle={{ marginTop: 24 }}
-          />
-
-          <Divider text="Or Continue" />
-
-          <CustomButton
-            title="Continue with Google"
-            icon="logo-google"
-            variant="google"
-            onPress={onGoogleLogin}
           />
         </View>
       )}

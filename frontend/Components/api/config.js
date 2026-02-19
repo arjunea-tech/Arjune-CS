@@ -11,7 +11,8 @@ const getBaseURL = () => {
         return 'http://localhost:5000/api/v1';
     }
     // For Physical Device/Emulator
-    return 'http://192.168.1.41:5000/api/v1';
+    // Updated to current machine IP: 192.168.1.38
+    return 'http://192.168.1.38:5000/api/v1';
 };
 
 const API_BASE_URL = getBaseURL();

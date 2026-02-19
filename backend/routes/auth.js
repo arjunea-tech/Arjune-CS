@@ -13,7 +13,7 @@ router.post('/register', authRateLimiter, upload.single('avatar'), validators.re
 router.post('/login', authRateLimiter, validators.login, validateRequest, login);
 router.post('/google', googleLogin);
 router.post('/forgotpassword', authRateLimiter, forgotPassword);
-router.post('/resetpassword', authRateLimiter, resetPassword);
+router.post('/resetpassword', resetPassword);
 
 // Protected routes
 router.get('/me', protect, getMe);

@@ -22,7 +22,6 @@ const LoginSchema = YUP.object().shape({
 
 export function LoginCard({
   onLogin,
-  onGoogleLogin,
   onSignUp,
   onForgetPassword,
   loading,
@@ -95,15 +94,6 @@ export function LoginCard({
               <Text style={styles.signupLink}>Sign up</Text>
             </TouchableOpacity>
           </View>
-
-          <Divider />
-
-          <CustomButton
-            title="Continue with Google"
-            icon="logo-google"
-            variant="google"
-            onPress={onGoogleLogin}
-          />
         </View>
       )}
     </Formik>
